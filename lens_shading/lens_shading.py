@@ -20,10 +20,31 @@ def messageBoxOK(title, msg):
     Label(box, text=msg).pack()
     Button(box, text='OK', command=box.destroy).pack()
 
+
+
+def splitBayerRawWord(bayerdata, width, height, rawBits):
+    # if isPacked == True:
+    #     messageBox('Error', 'Packed Raw Image is yet supported !!')
+    #     return False
+
+    w2 = (int(width>>1)<<1)<<1 # 2 bytes per pixel
+    h = int(height>>1)<<1
+    print("width %d -> %d, height %d -> %d" % (width, w2>>1, height, h))
+
+    for rr in range (0, h, 2):   # process two rows at a time, R/Gr, Gb/B
+        offset = rr * w2
+        for cc in range (0, w2, 2):
+            lbyte = bayerdata[offset+cc]
+            hbyte = bayerdata[offset+cc+1]
+
+    return True
+
 def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     print("Button: Load RAW")
-    print(rawdata)
+    splitBayerRaw(rawdata, int(txtlblRawWidth.get()), 
+                    int(txtlblRawHeight.get()), 
+                    int(txtlblRawBits.get()) )
 
 def cbfnButtonOpenRaw():
     global txtlblRawFName, btnRaw, rawdata
@@ -53,13 +74,13 @@ lblRawFName.grid(row=0, column=1, columnspan=8)
 
 lblRawWidth = Label(winMain, text='Width')
 lblRawWidth.grid(row=1, column=0, pady=2)
-txtlblRawWidth = StringVar()
+txtlblRawWidth = StringVar(value='1920')
 entryRawWidth = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawWidth)
 entryRawWidth.grid(row=1, column=1, sticky=W)
 
 lblRawHeight = Label(winMain, text='Height')
 lblRawHeight.grid(row=2, column=0, pady=2)
-txtlblRawHeight = StringVar()
+txtlblRawHeight = StringVar(value='1080')
 entryRawHeight = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawHeight)
 entryRawHeight.grid(row=2, column=1, sticky=W)
 
@@ -85,7 +106,7 @@ for bayer, val, row, col in bayer_config:
 
 lblRawBits = Label(winMain, text='Pixel Bits')
 lblRawBits.grid(row=3, column=0, padx=2, pady=2)
-txtlblRawBits = StringVar()
+txtlblRawBits = StringVar(value='10')
 entryRawBits = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawBits)
 entryRawBits.grid(row=3, column=1, sticky=W)
 
