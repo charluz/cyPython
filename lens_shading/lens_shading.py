@@ -36,13 +36,14 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
         for cc in range (0, w2, 2):
             lbyte = bayerdata[offset+cc]
             hbyte = bayerdata[offset+cc+1]
+            pix_v = hbyte*256 + lbyte
 
     return True
 
 def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     print("Button: Load RAW")
-    splitBayerRaw(rawdata, int(txtlblRawWidth.get()), 
+    splitBayerRawWord(rawdata, int(txtlblRawWidth.get()), 
                     int(txtlblRawHeight.get()), 
                     int(txtlblRawBits.get()) )
 
