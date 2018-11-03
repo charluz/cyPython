@@ -34,6 +34,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
     for rr in range (0, h, 2):   # process two rows at a time, R/Gr, Gb/B
         offset = rr * w2
         for cc in range (0, w2, 2):
+            ## color_1
             lbyte = bayerdata[offset+cc]
             hbyte = bayerdata[offset+cc+1]
             pix_v = hbyte*256 + lbyte
