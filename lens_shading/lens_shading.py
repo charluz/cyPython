@@ -41,6 +41,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
 
     return True
 
+
 def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     print("Button: Load RAW")
