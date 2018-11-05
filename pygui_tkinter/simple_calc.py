@@ -25,8 +25,8 @@ winMain.geometry("+200+200")
 # 步驟三：建立視窗控制項元件。
 # 建立標籤
 txt60Hz="""
-1/120" = 8.333ms    1/60" = 16.666ms
-1/30"  = 33.333ms   1/15" = 66.666ms
+1/120" = 8.333ms  (0x201)  1/60" = 16.666ms (0x402)
+1/30"  = 33.333ms (0x803)  1/15" = 66.666ms (0x1006)
 """
 lbl60HzShutterTime = Label(winMain, text=txt60Hz).grid(row=4, column=0, columnspan=4)
 
