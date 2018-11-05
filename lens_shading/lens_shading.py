@@ -27,7 +27,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
     # if isPacked == True:
     #     messageBox('Error', 'Packed Raw Image is yet supported !!')
     #     return False
-    global simg1, simg2, simg3, simg4;
+    global simg1, simg2, simg3, simg4
 
     imgW, imgH = (int(width>>1))<<1, (int(height>>1)<<1)
     simgW, simgH =int(imgW>>1), int(imgH>>1)
