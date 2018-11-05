@@ -2,6 +2,7 @@
 
 from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
 from tkinter import filedialog
+import numpy as np
 
 '''
 from tkFileDialog import askopenfilename
@@ -26,18 +27,31 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
     # if isPacked == True:
     #     messageBox('Error', 'Packed Raw Image is yet supported !!')
     #     return False
+    global simg1, simg2, simg3, simg4;
 
-    w2 = (int(width>>1)<<1)<<1 # 2 bytes per pixel
-    h = int(height>>1)<<1
-    print("width %d -> %d, height %d -> %d" % (width, w2>>1, height, h))
+    imgW, imgH = (int(width>>1))<<1, (int(height>>1)<<1)
+    simgW, simgH =int(imgW>>1), int(imgH>>1)
+    simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 1], np.uint16) for x in range(4)]
 
-    for rr in range (0, h, 2):   # process two rows at a time, R/Gr, Gb/B
-        offset = rr * w2
-        for cc in range (0, w2, 2):
+    print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
+
+    for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
+        offset_even = rr * imgW * 2     # 2 bytes per pixels
+        offset_odd = offset_even + (imgW * 2)
+        for cc in range (0, imgW, 2):
             ## color_1
-            lbyte = bayerdata[offset+cc]
-            hbyte = bayerdata[offset+cc+1]
-            pix_v = hbyte*256 + lbyte
+            lbyte = bayerdata[offset_even+cc]
+            hbyte = bayerdata[offset_even+cc+1]
+            pix_v = (hbyte*256 + lbyte)
+            simg1[rr>>1,cc>>1]
+
+            ## color_2
+            lbyte = bayerdata[offset_even+cc]
+            hbyte = bayerdata[offset_even+cc+1]
+            pix_v = (hbyte*256 + lbyte)
+            simg1[rr>>1,cc>>1]
+
+
 
     return True
 
