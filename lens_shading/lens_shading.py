@@ -3,6 +3,7 @@
 from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
 from tkinter import filedialog
 import numpy as np
+import matplotlib.pyplot as plt
 
 '''
 from tkFileDialog import askopenfilename
@@ -36,23 +37,35 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
     print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
     for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
-        offset_even = rr * imgW * 2     # 2 bytes per pixels
-        offset_odd = offset_even + (imgW * 2)
+        row_even_offset = rr * imgW * 2     # 2 bytes per pixels
+        row_odd_offset = row_even_offset + (imgW * 2)
         for cc in range (0, imgW, 2):
-            ## color_1
-            lbyte = bayerdata[offset_even+cc]
-            hbyte = bayerdata[offset_even+cc+1]
+            col_offset = cc * 2
+            ## color_1 (bayer top-left)
+            lbyte = bayerdata[row_even_offset+col_offset]
+            hbyte = bayerdata[row_even_offset+col_offset+1]
             pix_v = (hbyte*256 + lbyte)
-            simg1[rr>>1,cc>>1]
+            simg1[rr>>1,cc>>1] = pix_v
 
-            ## color_2
-            lbyte = bayerdata[offset_even+cc]
-            hbyte = bayerdata[offset_even+cc+1]
+            ## color_2 (bayer top-right)
+            lbyte = bayerdata[row_even_offset+col_offset+2]
+            hbyte = bayerdata[row_even_offset+col_offset+3]
             pix_v = (hbyte*256 + lbyte)
-            simg1[rr>>1,cc>>1]
+            simg2[rr>>1,cc>>1] = pix_v
 
+            ## color_3 (bayer bottom-left)
+            lbyte = bayerdata[row_odd_offset+col_offset]
+            hbyte = bayerdata[row_odd_offset+col_offset+1]
+            pix_v = (hbyte*256 + lbyte)
+            simg3[rr>>1,cc>>1] = pix_v
 
+            ## color_4 (bayer bottom-right)
+            lbyte = bayerdata[row_odd_offset+col_offset+2]
+            hbyte = bayerdata[row_odd_offset+col_offset+3]
+            pix_v = (hbyte*256 + lbyte)
+            simg4[rr>>1,cc>>1] = pix_v
 
+            plt.imshow(simg4)
     return True
 
 
@@ -91,13 +104,13 @@ lblRawFName.grid(row=0, column=1, columnspan=8)
 
 lblRawWidth = Label(winMain, text='Width')
 lblRawWidth.grid(row=1, column=0, pady=2)
-txtlblRawWidth = StringVar(value='1920')
+txtlblRawWidth = StringVar(value='2304')
 entryRawWidth = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawWidth)
 entryRawWidth.grid(row=1, column=1, sticky=W)
 
 lblRawHeight = Label(winMain, text='Height')
 lblRawHeight.grid(row=2, column=0, pady=2)
-txtlblRawHeight = StringVar(value='1080')
+txtlblRawHeight = StringVar(value='1296')
 entryRawHeight = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawHeight)
 entryRawHeight.grid(row=2, column=1, sticky=W)
 
@@ -119,7 +132,7 @@ for bayer, val, row, col in bayer_config:
                   value=val)
     btn.grid(row=row, column=col)
     btn.config(anchor=W, justify=LEFT, width=2)
-    print("Bayer= %s, Row= %d, Column= %d" % (bayer, row, col) )
+    #print("Bayer= %s, Row= %d, Column= %d" % (bayer, row, col) )
 
 lblRawBits = Label(winMain, text='Pixel Bits')
 lblRawBits.grid(row=3, column=0, padx=2, pady=2)
