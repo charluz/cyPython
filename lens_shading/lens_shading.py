@@ -24,10 +24,23 @@ def messageBoxOK(title, msg):
 
 
 
+###########################################################
+# Function : Split Bayer Components
+###########################################################
 def splitBayerRawWord(bayerdata, width, height, rawBits):
-    # if isPacked == True:
-    #     messageBox('Error', 'Packed Raw Image is yet supported !!')
-    #     return False
+    '''
+    @Brief 
+        To split R/Gr/Gb/B components from Bayer Raw image input.
+    @In 
+        bayerdata   : Raw image input (from io.open/io.read)
+        width, height   : size of Raw image
+        rawBits     : number of bits per pixel
+    @Out
+        boolean : indicating success/failure
+    @Globals
+        simg1, simg2, simg3, simg4 : sub-images of R/Gr/Gb/B. 
+            Size of sub-image is (widht/2, height/2).
+    '''
     global simg1, simg2, simg3, simg4
 
     imgW, imgH = (int(width>>1))<<1, (int(height>>1)<<1)
@@ -72,6 +85,9 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
     return True
 
 
+###########################################################
+# Button Function : LoadRAW
+###########################################################
 def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     print("Button: Load RAW")
@@ -79,6 +95,9 @@ def cbfnButtonLoadRaw():
                     int(txtlblRawHeight.get()), 
                     int(txtlblRawBits.get()) )
 
+###########################################################
+# Button Function : OpenRAW
+###########################################################
 def cbfnButtonOpenRaw():
     global txtlblRawFName, btnRaw, rawdata
     txtlblRawFName.set(value=filedialog.askopenfilename() )
@@ -96,6 +115,9 @@ def cbfnButtonOpenRaw():
         btnRaw.config(text='Load RAW', command=cbfnButtonLoadRaw)
     '''
 
+###########################################################
+# MainEntry 
+###########################################################
 
 btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw)
 btnRaw.grid(row=0, column=0, pady=2)
@@ -118,9 +140,9 @@ entryRawHeight = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlb
 entryRawHeight.grid(row=2, column=1, sticky=W)
 
 
-def ShowChoice():
-    global bayerSelect
-    print(bayerSelect.get())
+# def ShowChoice():
+#     global bayerSelect
+#     print(bayerSelect.get())
 
 lblRawBayer = Label(winMain, text='Bayer')
 lblRawBayer.grid(row=1, column=3, pady=2)
@@ -131,7 +153,7 @@ for bayer, val, row, col in bayer_config:
     btn = Radiobutton(winMain, text=bayer,
                   padx = 20, 
                   variable=bayerSelect, 
-                  command=ShowChoice,
+                  #command=ShowChoice,
                   value=val)
     btn.grid(row=row, column=col)
     btn.config(anchor=W, justify=LEFT, width=2)
