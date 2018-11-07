@@ -22,5 +22,6 @@ import matplotlib.pyplot as plt
 img = np.zeros([6,8,3], np.uint8)
 img.fill(255)
 #print(img.shape, type(img))
-#plt.imshow(img)
-print(img)
+plt.imshow(img)
+plt.show()
+#print(img)

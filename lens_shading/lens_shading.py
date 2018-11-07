@@ -32,7 +32,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
 
     imgW, imgH = (int(width>>1))<<1, (int(height>>1)<<1)
     simgW, simgH =int(imgW>>1), int(imgH>>1)
-    simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 1], np.uint16) for x in range(4)]
+    simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 3], np.uint8) for x in range(4)]
 
     print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
@@ -44,28 +44,31 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
             ## color_1 (bayer top-left)
             lbyte = bayerdata[row_even_offset+col_offset]
             hbyte = bayerdata[row_even_offset+col_offset+1]
-            pix_v = (hbyte*256 + lbyte)
-            simg1[rr>>1,cc>>1] = pix_v
+            pix_v = (hbyte*256 + lbyte) >> (rawBits-8)
+            simg1[rr>>1,cc>>1] = [pix_v for x in range(3)]
 
             ## color_2 (bayer top-right)
             lbyte = bayerdata[row_even_offset+col_offset+2]
             hbyte = bayerdata[row_even_offset+col_offset+3]
-            pix_v = (hbyte*256 + lbyte)
-            simg2[rr>>1,cc>>1] = pix_v
+            pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
+            simg2[rr>>1,cc>>1] = [pix_v for x in range(3)]
 
             ## color_3 (bayer bottom-left)
             lbyte = bayerdata[row_odd_offset+col_offset]
             hbyte = bayerdata[row_odd_offset+col_offset+1]
-            pix_v = (hbyte*256 + lbyte)
-            simg3[rr>>1,cc>>1] = pix_v
+            pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
+            simg3[rr>>1,cc>>1] = [pix_v for x in range(3)]
 
             ## color_4 (bayer bottom-right)
             lbyte = bayerdata[row_odd_offset+col_offset+2]
             hbyte = bayerdata[row_odd_offset+col_offset+3]
-            pix_v = (hbyte*256 + lbyte)
-            simg4[rr>>1,cc>>1] = pix_v
+            pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
+            simg4[rr>>1,cc>>1] = [pix_v for x in range(3)]
 
-            plt.imshow(simg4)
+    #print(simg4)
+    plt.imshow(simg4)
+    plt.show()
+
     return True
 
 
