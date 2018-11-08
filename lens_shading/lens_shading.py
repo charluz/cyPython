@@ -12,10 +12,9 @@ That code would have worked fine in Python 2.x, but it is no longer valid.
 In Python 3.x, tkFileDialog was renamed to filedialog.
 '''
 
-winMain = Tk()
-winMain.title('Lens Shading Viewer')
-#winMain.geometry('300x150')
-
+###########################################################
+# Message Box with OK button
+###########################################################
 def messageBoxOK(title, msg):
     box = Toplevel()
     box.title(title)
@@ -49,6 +48,12 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
 
     print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
+    box = Toplevel()
+    #box.title(title)
+    lbl = Label(box, text='Process RAW ...')
+    lbl.pack()
+
+
     for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
         row_even_offset = rr * imgW * 2     # 2 bytes per pixels
         row_odd_offset = row_even_offset + (imgW * 2)
@@ -78,9 +83,13 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
             pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
             simg4[rr>>1,cc>>1] = [pix_v for x in range(3)]
 
+    # dismiss message box
+    box.destroy()
+
     #print(simg4)
     plt.imshow(simg4)
     plt.show()
+    plt.imsave('./simg4.jpg', simg4)
 
     return True
 
@@ -118,6 +127,10 @@ def cbfnButtonOpenRaw():
 ###########################################################
 # MainEntry 
 ###########################################################
+
+winMain = Tk()
+winMain.title('Lens Shading Viewer')
+#winMain.geometry('300x150')
 
 btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw)
 btnRaw.grid(row=0, column=0, pady=2)
