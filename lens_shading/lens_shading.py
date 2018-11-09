@@ -48,12 +48,6 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
 
     print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
-    box = Toplevel()
-    #box.title(title)
-    lbl = Label(box, text='Process RAW ...')
-    lbl.pack()
-
-
     for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
         row_even_offset = rr * imgW * 2     # 2 bytes per pixels
         row_odd_offset = row_even_offset + (imgW * 2)
@@ -83,12 +77,12 @@ def splitBayerRawWord(bayerdata, width, height, rawBits):
             pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
             simg4[rr>>1,cc>>1] = [pix_v for x in range(3)]
 
-    # dismiss message box
-    box.destroy()
-
     #print(simg4)
-    plt.imshow(simg4)
-    plt.show()
+    # plt.imshow(simg4)
+    # plt.show()
+    plt.imsave('./simg1.jpg', simg1)
+    plt.imsave('./simg2.jpg', simg2)
+    plt.imsave('./simg3.jpg', simg3)
     plt.imsave('./simg4.jpg', simg4)
 
     return True
