@@ -39,7 +39,7 @@ def bezier_curve(points, nTimes=1000):
 
     # print('type of polynomial_array :', end=''); print(type(polynomial_array))
     # print('length of polynomial_array :', end=''); print(len(polynomial_array))
-
+https://github.com/charluz/cyNotebooks.git
     xvals = np.dot(xPoints, polynomial_array)
     yvals = np.dot(yPoints, polynomial_array)
 
