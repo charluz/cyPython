@@ -11,30 +11,37 @@ import matplotlib.pyplot as plt
 import cv2  
 
 
-drawing = False  
-mode = True  
-ix, iy = -1, -1  
-
+'''
+    messageBoxOK()
+'''
 def messageBoxOK(title, msg):
+    '''Popup dialog box to show a short message '''
     box = Toplevel()
     box.title(title)
     Label(box, text=msg).pack()
     Button(box, text='OK', command=box.destroy).pack()
 
 
+'''
+    cbfnButtonOpenRaw()
+'''
 def cbfnButtonOpenRaw():
+    '''Callback of button OpenRAW'''
+    
     global txtlblRawFName, btnRaw, rawdata,load_img_en
     global img,re_img,img2
     txtlblRawFName.set(value=filedialog.askopenfilename() )
     rawfname = txtlblRawFName.get()
     #print("11233455844",rawfname)
+    
     img = cv2.imread(rawfname)
     #cv2.imshow('image', img)
     re_img = cv2.resize(img,(960,540),interpolation=cv2.INTER_CUBIC)
     img2 = cv2.resize(img,(960,540),interpolation=cv2.INTER_CUBIC)
     cv2.namedWindow('image')  
-    cv2.setMouseCallback('image', draw_circle)  
+    cv2.setMouseCallback('image', cbfnMouseEvents_ImageWindow)  
     load_img_en = 1
+    '''
     try:
         f = open(rawfname, 'rb')
         rawdata = f.read()
@@ -43,18 +50,22 @@ def cbfnButtonOpenRaw():
     except:
         messageBoxOK('FileIO', 'Failed to open file :\n' + rawfname)
     '''
+    
+    '''
     with open(rawfname, 'rb') as in_file:
         rawdata = in_file.read()
         btnRaw.config(text='Load RAW', command=cbfnButtonLoadRaw)
-    
-'''
+    '''
 
-def draw_circle(event, x, y, flags, param):  
+'''
+    cbfnMouseEvents_ImageWindow
+'''
+def cbfnMouseEvents_ImageWindow(event, x, y, flags, param):  
     global ix, iy, drawing, mode 
     global img,img2,re_img
   
     if event == cv2.EVENT_LBUTTONDOWN:  
-        print("left button down")  
+        #print("left button down")  
         #img = img2.copy()
         re_img = img2.copy()
         drawing = True  
@@ -105,7 +116,6 @@ def draw_circle(event, x, y, flags, param):
         print("SNR",SNR)
 
         print(mean,std)
-
         
         text2 = str(SNR)
         text = str(std)
@@ -118,8 +128,12 @@ def draw_circle(event, x, y, flags, param):
         print("count_add",count_add)
         print("W , H",test_img.shape[0],test_img.shape[1])
         cv2.imshow('test_img',test_img)
-
-def job():
+        
+        
+'''
+    thread_function()
+'''
+def thread_function():
   global load_img_en
   global img
 
@@ -137,6 +151,30 @@ def job():
         break
 
 
+
+# In[ ]:
+
+
+try:
+    img = cv2.imread("Building.jpg")
+except:
+    messageBoxOK('Error', 'Error while opening image file')
+
+print('image height, width, channel : ', end=''); print(img.shape)
+#re_img = cv2.resize(img,(960,540),interpolation=cv2.INTER_CUBIC)
+#img2 = cv2.resize(img,(960,540),interpolation=cv2.INTER_CUBIC)
+#cv2.namedWindow('image')
+cv2.imshow('image', img)
+cv2.waitKey(0)
+
+
+# In[ ]:
+
+
+
+drawing = False  
+mode = True  
+ix, iy = -1, -1          
   #for i in range(5):
    # print("Child thread:", i)
     #time.sleep(1)
@@ -146,7 +184,7 @@ load_img_en = 0
 img = cv2.imread("Building.jpg") # init opencv info
 img2 = img.copy() # init opencv info
 re_img = img.copy() # init opencv info
-t = threading.Thread(target = job)
+t = threading.Thread(target = thread_function)
 
 #cv2.namedWindow('image')  
 #cv2.setMouseCallback('image', draw_circle)  
