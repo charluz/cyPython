@@ -157,24 +157,27 @@ def cbfnButtonOpenRaw():
         # rawdata = f.read()
         # f.close()
         rawdata = np.fromfile(rawfname, dtype=np.uint16)
-
+        print(type(rawdata), rawdata)
     except:
         messageBoxOK('FileIO', 'Failed to open file :\n' + rawfname)
 
 
-
+    print('type of rawdata: ', end=''); print(type(rawdata))
     imgSize = int(txtlblRawHeight.get()), int(txtlblRawWidth.get())
-    imgRaw = np.array(rawdata, dtype=np.uint16).reshape(imgSize)
+    print(imgSize)
+    imgRaw = rawdata.reshape(imgSize)
     matBGR = cv2.cvtColor(imgRaw, cv2.COLOR_BAYER_BG2BGR)
 
+    imgRaw *= 64
+    print(imgRaw)
 
-    imgRaw.converTo(imgRaw, -1, 1, 64,0)
-
+    '''
     cv2.namedWindow("RAW Image", cv2.WINDOW_NORMAL)
     cv2.namedWindow("BGR Image", cv2.WINDOW_NORMAL)
-    cv2.imshow("RAW Image", imgRaw)
-    cv2.imshow("BGR Image", matBGR)
+    #cv2.imshow("RAW Image", imgRaw)
+    #cv2.imshow("BGR Image", matBGR)
     cv2.imwrite("xxx.jpg", matBGR)
+    '''
 
     '''
     with open(rawfname, 'rb') as in_file:
@@ -201,14 +204,14 @@ if __name__ == "__main__":
 
     lblRawWidth = Label(winMain, text='Width')
     lblRawWidth.grid(row=1, column=0, pady=2)
-    txtlblRawWidth = StringVar(value='2560') 
+    txtlblRawWidth = StringVar(value='2304') 
     entryRawWidth = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawWidth)
     entryRawWidth.grid(row=1, column=1, sticky=W)
 
 
     lblRawHeight = Label(winMain, text='Height')
     lblRawHeight.grid(row=2, column=0, pady=2)
-    txtlblRawHeight = StringVar(value='1436')
+    txtlblRawHeight = StringVar(value='1296')
     entryRawHeight = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawHeight)
     entryRawHeight.grid(row=2, column=1, sticky=W)
 
