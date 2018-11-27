@@ -35,13 +35,16 @@ def save_raw_RGrGbB_image(img1, img2, img3, img4):
     plt.imsave('./raw_B_gray.jpg', img4)
 
 def save_raw_GrRBGb_image(img1, img2, img3, img4):
-    plt.imsave('./raw_Gr_gray.jpg', img1)
-    img1[:,:][0] = 0
-    img1[:,:][2] = 0
-    plt.imsave('./raw_Gr.jpg', img1)
-    plt.imsave('./raw_R_gray.jpg', img2)
-    plt.imsave('./raw_B_gray.jpg', img3)
-    plt.imsave('./raw_Gb_gray.jpg', img4)
+    winGrName = "RAW_Gr"
+    cv2.namedWindow(winGrName, cv2.WINDOW_AUTOSIZE)
+    img = img1.astype(np.uint8)
+    matGr = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    cv2.imshow(winGrName, matGr)
+    # plt.imsave('./raw_Gr_gray.jpg', img1)
+    # plt.imsave('./raw_Gr.jpg', img1)
+    # plt.imsave('./raw_R_gray.jpg', img2)
+    # plt.imsave('./raw_B_gray.jpg', img3)
+    # plt.imsave('./raw_Gb_gray.jpg', img4)
 
 def save_raw_GbBRGr_image(img1, img2, img3, img4):
     plt.imsave('./raw_Gb_gray.jpg', img1)
@@ -81,45 +84,57 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
 
     imgW, imgH = (int(width>>1))<<1, (int(height>>1)<<1)
     simgW, simgH =int(imgW>>1), int(imgH>>1)
-    simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 3], np.uint8) for x in range(4)]
+    simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
 
     print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
     btnRaw.config(bg='Coral')
     bitshift = rawBits-8
-    for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
-        row_even_offset = rr * imgW     # 2 bytes per pixels
-        row_odd_offset = row_even_offset + imgW
-        for cc in range (0, imgW, 2):
-            col_offset = cc
-            rrow = rr>>1
-            ccol = cc>>1
-            ## color_1 (bayer top-left)
-            # lbyte = bayerdata[row_even_offset+col_offset]
-            # hbyte = bayerdata[row_even_offset+col_offset+1]
-            # pix_v = (hbyte*256 + lbyte) >> (rawBits-8)
-            pix_v = bayerdata[row_even_offset+col_offset] >> bitshift
-            simg1[rrow,ccol] = [pix_v for x in range(3)]
 
-            ## color_2 (bayer top-right)
-            # lbyte = bayerdata[row_even_offset+col_offset+2]
-            # hbyte = bayerdata[row_even_offset+col_offset+3]
-            # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
-            pix_v = bayerdata[row_even_offset+col_offset+1] >> bitshift
-            simg2[rrow,ccol] = [pix_v for x in range(3)]
+    imgRaw = bayerdata.reshape(imgH, imgW)
+    simg1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
+    simg2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
+    simg3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
+    simg4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
 
-            ## color_3 (bayer bottom-left)
-            # lbyte = bayerdata[row_odd_offset+col_offset]
-            # hbyte = bayerdata[row_odd_offset+col_offset+1]
-            # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
-            pix_v = bayerdata[row_odd_offset+col_offset] >> bitshift
-            simg3[rrow,ccol] = [pix_v for x in range(3)]
+    # print("imgRaw ", end=''); print(imgRaw[320:322,570:572])
+    # print("simg1 ", end=''); print(simg1[320:322,570:572])
+    # print("simg2 ", end=''); print(simg2[320:322,570:572])
+    # print("simg3 ", end=''); print(simg3[320:322,570:572])
+    # print("simg4 ", end=''); print(simg4[320:322,570:572])
+    # for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
+    #     row_even_offset = rr * imgW     # 2 bytes per pixels
+    #     row_odd_offset = row_even_offset + imgW
+    #     for cc in range (0, imgW, 2):
+    #         col_offset = cc
+    #         rrow = rr>>1
+    #         ccol = cc>>1
+    #         ## color_1 (bayer top-left)
+    #         # lbyte = bayerdata[row_even_offset+col_offset]
+    #         # hbyte = bayerdata[row_even_offset+col_offset+1]
+    #         # pix_v = (hbyte*256 + lbyte) >> (rawBits-8)
+    #         pix_v = bayerdata[row_even_offset+col_offset] >> bitshift
+    #         simg1[rrow,ccol] = [pix_v for x in range(3)]
 
-            ## color_4 (bayer bottom-right)
-            # lbyte = bayerdata[row_odd_offset+col_offset+2]
-            # hbyte = bayerdata[row_odd_offset+col_offset+3]
-            # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
-            pix_v = bayerdata[row_odd_offset+col_offset+1] >> bitshift
-            simg4[rrow,ccol] = [pix_v for x in range(3)]
+    #         ## color_2 (bayer top-right)
+    #         # lbyte = bayerdata[row_even_offset+col_offset+2]
+    #         # hbyte = bayerdata[row_even_offset+col_offset+3]
+    #         # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
+    #         pix_v = bayerdata[row_even_offset+col_offset+1] >> bitshift
+    #         simg2[rrow,ccol] = [pix_v for x in range(3)]
+
+    #         ## color_3 (bayer bottom-left)
+    #         # lbyte = bayerdata[row_odd_offset+col_offset]
+    #         # hbyte = bayerdata[row_odd_offset+col_offset+1]
+    #         # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
+    #         pix_v = bayerdata[row_odd_offset+col_offset] >> bitshift
+    #         simg3[rrow,ccol] = [pix_v for x in range(3)]
+
+    #         ## color_4 (bayer bottom-right)
+    #         # lbyte = bayerdata[row_odd_offset+col_offset+2]
+    #         # hbyte = bayerdata[row_odd_offset+col_offset+3]
+    #         # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
+    #         pix_v = bayerdata[row_odd_offset+col_offset+1] >> bitshift
+    #         simg4[rrow,ccol] = [pix_v for x in range(3)]
 
     save_bayer_img = { 
         0:save_raw_RGrGbB_image, 
@@ -132,8 +147,11 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     func(simg1, simg2, simg3, simg4)
     btnRaw.config(text='Load RAW', command=cbfnButtonOpenRaw, bg='LightGray')
     #print(simg4)
-    plt.imshow(simg4)
-    plt.show()
+    # plt.imshow(simg4); plt.show()
+    # plt.imshow(simg3); plt.show()
+    # plt.imshow(simg2); plt.show()
+    plt.imshow(simg1); plt.show()
+    # plt.imshow(imgRaw); plt.show()
     # plt.imsave('./simg1.jpg', simg1)
     # plt.imsave('./simg2.jpg', simg2)
     # plt.imsave('./simg3.jpg', simg3)

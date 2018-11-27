@@ -112,7 +112,11 @@ def cbfnButtonOpenRaw():
     cbfnButtonLoadRaw()
 
     return
+
  
+###########################################################
+# Button Function : Exit Main Window
+###########################################################
 def cbfnButtonMainExit():
     cv2.destroyAllWindows()
     winMain.destroy()
@@ -177,10 +181,6 @@ if __name__ == "__main__":
     entryRawBits = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawBits)
     entryRawBits.grid(row=curRow, column=1, sticky=W)
 
-    curRow +=1
-    varBytePack = IntVar(value=0)
-    chkBytePack = Checkbutton(winMain, text='Packed', variable=varBytePack)
-    chkBytePack.grid(row=curRow, column=1, sticky=W)
 
 
     winMain.mainloop()
