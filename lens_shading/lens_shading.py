@@ -76,10 +76,13 @@ def createImageRepoRoot(cwd, name):
 
 def saveRawGrayImage(rawImg, bayerCode):
     matRaw = rawImg << (16-int(txtlblRawBits.get()))
+
     code = bayer2gray_code.get(bayerCode, cv2.COLOR_BAYER_RG2GRAY)
     cv2.cvtColor(matRaw, code)
     matGray = cv2.cvtColor(matRaw, code)
-
+    matGray = matGray / 256
+    matGray = matGray.astype(np.uint8)
+    print(matGray)
     win_title = "RAW_Gray"
     if gIsShowRawImage:
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
@@ -350,7 +353,7 @@ if __name__ == "__main__":
     entryRawBits.grid(row=curRow, column=1, sticky=W)
 
     curRow += 1
-    Label(winMain, text='ShowImages').grid(row=curRow, column=0)
+    Label(winMain, text='ShowRAW').grid(row=curRow, column=0)
     chkShowBayerImg = IntVar()
     chkShowBayerImg.set(0)
     btnShowBayerImg = Checkbutton(winMain, text='BayerColors', variable=chkShowBayerImg)
