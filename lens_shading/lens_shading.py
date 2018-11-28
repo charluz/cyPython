@@ -1,11 +1,15 @@
 #!/usr/bin/python
 
+import os, sys
+
 from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
 from tkinter import filedialog
 import cv2
+
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+from show_shading3D import show_RGB_shading3D
+
 
 '''
 from tkFileDialog import askopenfilename
@@ -115,7 +119,7 @@ def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
 
     if not winName:
         winName = 'bayerColor'+str(bayerCode)
-    print(gRawBaseName+winName)
+    # print(gRawBaseName+winName)
     cv2.imwrite(gRawBaseName+"_"+winName+".jpg", matImg)
 
     if isShowImg:
@@ -190,6 +194,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
 
     print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
+
     btnRaw.config(bg='Coral')
     bitshift = rawBits-8
 
@@ -213,6 +218,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     func = save_bayer_img.get(bayerType, save_raw_XXXX_image)
     func(simg1, simg2, simg3, simg4)
     btnRaw.config(text='RESET', command=cbfnButtonReset, bg='LightBlue')
+
     #print(simg4)
     # plt.imshow(simg4); plt.show()
     # plt.imshow(simg3); plt.show()
@@ -250,6 +256,7 @@ def cbfnButtonOpenRaw():
     global gIsShowBayerImage, chkShowBayerImg, gIsShowRawImage, chkShowRawImg
 
     rawfname = filedialog.askopenfilename()
+
     #print(rawfname)
     try:
         # f = open(rawfname, 'rb')
@@ -266,9 +273,10 @@ def cbfnButtonOpenRaw():
     os.chdir(gImgRepoRoot)
     gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
     # print(gImgRepoRoot)
-
+import os, sys
     # Create folder to save output images for loaded RAW image
     baseName = os.path.basename(rawfname)
+
     base, ext = os.path.splitext(baseName)
     gImgRepoCurr = gImgRepoRoot + "/" + base
     #print("Target image repo ", gImgRepoCurr)
