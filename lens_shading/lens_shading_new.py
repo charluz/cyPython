@@ -229,10 +229,14 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
 def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     # print("Button: Load RAW")
-    splitBayerRawWord(rawdata, int(txtlblRawWidth.get()), 
-                    int(txtlblRawHeight.get()), 
-                    int(txtlblRawBits.get()),  
-                    bayerSelect.get())
+    try:
+        splitBayerRawWord(rawdata, int(txtlblRawWidth.get()), 
+                        int(txtlblRawHeight.get()), 
+                        int(txtlblRawBits.get()),  
+                        bayerSelect.get())
+    except:
+        cbfnButtonReset()
+        return
 
 ###########################################################
 # Button Function : OpenRAW
@@ -251,6 +255,8 @@ def cbfnButtonOpenRaw():
         rawdata = np.fromfile(rawfname, dtype=np.uint16)
     except:
         messageBoxOK('FileIO', 'Failed to open file :\n' + rawfname)
+        cbfnButtonReset()
+        return
 
     # Create root repository folder for output images
     gImgRepoRoot = os.path.dirname(rawfname)
