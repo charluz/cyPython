@@ -14,6 +14,28 @@ That code would have worked fine in Python 2.x, but it is no longer valid.
 In Python 3.x, tkFileDialog was renamed to filedialog.
 '''
 
+gImgRepoRoot = repr(os.getcwd())
+gImgRepoCurr = gImgRepoRoot
+gRawBaseName = ""
+gIsShowBayerImage = 0
+gIsShowRawImage = 1
+gMaxImgShowWidth = 640
+
+bayer2gray_code = {
+    0: cv2.COLOR_BAYER_RG2GRAY,
+    1: cv2.COLOR_BAYER_GR2GRAY,
+    2: cv2.COLOR_BAYER_GB2GRAY,
+    3: cv2.COLOR_BAYER_BG2GRAY
+}
+
+bayerImg_geometric = { # (X, Y)
+    0: (300, 140),  # R
+    1: (340, 170),  # Gr
+    2: (380, 200),  # Gb
+    3: (420, 230),  # B
+    100: (300, 300) # RawGray
+}
+
 ###########################################################
 # Message Box with OK button
 ###########################################################
@@ -26,37 +48,110 @@ def messageBoxOK(title, msg):
 
 
 ###########################################################
-# Function : switch case dispatch to save R/Gr/Gb/B images
+# Functions : Create working folders
 ###########################################################
+def createDirectory(name):
+    if not os.path.exists(name):
+        try:
+            os.mkdir(name)
+        except:
+            messageBoxOK("Error", "Can't create folder : \n"+repr(name))
+            return ""
+        print("Directory ", name, " created.")
+    else:
+        print("Directory ", name, " already exists.") 
+
+    return name
+
+        
+            
+def createImageRepoRoot(cwd, name):
+    # print(cwd + name)
+    return createDirectory(cwd+name)
+
+
+###########################################################
+# Functions : switch case dispatch to save R/Gr/Gb/B images
+###########################################################
+
+def saveRawGrayImage(rawImg, bayerCode):
+    matRaw = rawImg << (16-int(txtlblRawBits.get()))
+    code = bayer2gray_code.get(bayerCode, cv2.COLOR_BAYER_RG2GRAY)
+    cv2.cvtColor(matRaw, code)
+    matGray = cv2.cvtColor(matRaw, code)
+
+    win_title = "RAW_Gray"
+    if gIsShowRawImage:
+        cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
+        x, y = bayerImg_geometric.get(100)
+        cv2.moveWindow(win_title, x, y)
+        h, w = matGray.shape
+        if w > gMaxImgShowWidth:
+            h = int( (h * gMaxImgShowWidth) / w)
+            w = gMaxImgShowWidth
+        cv2.resizeWindow(win_title, w, h)
+        cv2.imshow(win_title, matGray)
+
+    jpgGray = gRawBaseName + "_" + win_title + '.jpg'
+    cv2.imwrite(jpgGray, matGray)
+    return
+    
+
+def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
+    img = imgGray.astype(np.uint8)
+    matImg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    if bayerCode == 0:      # R
+        matImg[:,:,0] = 0
+        matImg[:,:,1] = 0
+    elif bayerCode == 1 or bayerCode == 2:    # Gr / Gb
+        matImg[:,:,0] = 0
+        matImg[:,:,2] = 0
+    else:                   # B
+        matImg[:,:,1] = 0
+        matImg[:,:,2] = 0
+
+    if not winName:
+        winName = 'bayerColor'+str(bayerCode)
+    print(gRawBaseName+winName)
+    cv2.imwrite(gRawBaseName+"_"+winName+".jpg", matImg)
+
+    if isShowImg:
+        cv2.namedWindow(winName, cv2.WINDOW_NORMAL)
+        w = matImg.shape[1]
+        h = matImg.shape[0]
+        if w > gMaxImgShowWidth:
+            h = int((h * gMaxImgShowWidth) / w)
+            w = gMaxImgShowWidth
+        cv2.resizeWindow(winName, w, h)
+        x, y = bayerImg_geometric.get(bayerCode)
+        cv2.moveWindow(winName, x, y)
+        cv2.imshow(winName, matImg)
+    
+    return matImg    
+
 def save_raw_RGrGbB_image(img1, img2, img3, img4):
-    plt.imsave('./raw_R_gray.jpg', img1)
-    plt.imsave('./raw_Gr_gray.jpg', img2)
-    plt.imsave('./raw_Gb_gray.jpg', img3)
-    plt.imsave('./raw_B_gray.jpg', img4)
+    saveSplitedImage(img1, 0, gIsShowBayerImage, "RAW_R")
+    saveSplitedImage(img2, 1, gIsShowBayerImage, "RAW_Gr")
+    saveSplitedImage(img3, 2, gIsShowBayerImage, "RAW_Gb")
+    saveSplitedImage(img4, 3, gIsShowBayerImage, "RAW_B")
 
 def save_raw_GrRBGb_image(img1, img2, img3, img4):
-    winGrName = "RAW_Gr"
-    cv2.namedWindow(winGrName, cv2.WINDOW_AUTOSIZE)
-    img = img1.astype(np.uint8)
-    matGr = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    cv2.imshow(winGrName, matGr)
-    # plt.imsave('./raw_Gr_gray.jpg', img1)
-    # plt.imsave('./raw_Gr.jpg', img1)
-    # plt.imsave('./raw_R_gray.jpg', img2)
-    # plt.imsave('./raw_B_gray.jpg', img3)
-    # plt.imsave('./raw_Gb_gray.jpg', img4)
+    saveSplitedImage(img1, 1, gIsShowBayerImage, "RAW_Gr")
+    saveSplitedImage(img2, 0, gIsShowBayerImage, "RAW_R")
+    saveSplitedImage(img3, 3, gIsShowBayerImage, "RAW_B")
+    saveSplitedImage(img4, 2, gIsShowBayerImage, "RAW_Gb")
 
 def save_raw_GbBRGr_image(img1, img2, img3, img4):
-    plt.imsave('./raw_Gb_gray.jpg', img1)
-    plt.imsave('./raw_B_gray.jpg', img2)
-    plt.imsave('./raw_R_gray.jpg', img3)
-    plt.imsave('./raw_Gr_gray.jpg', img4)
+    saveSplitedImage(img1, 2, gIsShowBayerImage, "RAW_Gb")
+    saveSplitedImage(img2, 3, gIsShowBayerImage, "RAW_B")
+    saveSplitedImage(img3, 0, gIsShowBayerImage, "RAW_R")
+    saveSplitedImage(img4, 1, gIsShowBayerImage, "RAW_Gr")
 
 def save_raw_BGbGrR_image(img1, img2, img3, img4):
-    plt.imsave('./raw_B_gray.jpg', img1)
-    plt.imsave('./raw_Gb_gray.jpg', img2)
-    plt.imsave('./raw_Gr_gray.jpg', img3)
-    plt.imsave('./raw_R_gray.jpg', img4)
+    saveSplitedImage(img1, 3, gIsShowBayerImage, "RAW_B")
+    saveSplitedImage(img2, 2, gIsShowBayerImage, "RAW_Gb")
+    saveSplitedImage(img3, 1, gIsShowBayerImage, "RAW_Gr")
+    saveSplitedImage(img4, 0, gIsShowBayerImage, "RAW_R")
 
 
 def save_raw_XXXX_image(img1, img2, img3, img4):
@@ -66,6 +161,11 @@ def save_raw_XXXX_image(img1, img2, img3, img4):
 ###########################################################
 # Function : Split Bayer Components
 ###########################################################
+def cbfnButtonReset():
+    cv2.destroyAllWindows()
+    btnRaw.config(text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
+
+
 def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     '''
     @Brief 
@@ -91,50 +191,14 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     bitshift = rawBits-8
 
     imgRaw = bayerdata.reshape(imgH, imgW)
+    saveRawGrayImage(imgRaw, bayerType)
+
     simg1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
     simg2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
     simg3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
     simg4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
 
-    # print("imgRaw ", end=''); print(imgRaw[320:322,570:572])
-    # print("simg1 ", end=''); print(simg1[320:322,570:572])
-    # print("simg2 ", end=''); print(simg2[320:322,570:572])
-    # print("simg3 ", end=''); print(simg3[320:322,570:572])
-    # print("simg4 ", end=''); print(simg4[320:322,570:572])
-    # for rr in range (0, imgH, 2):       # process two rows at a time, R/Gr, Gb/B
-    #     row_even_offset = rr * imgW     # 2 bytes per pixels
-    #     row_odd_offset = row_even_offset + imgW
-    #     for cc in range (0, imgW, 2):
-    #         col_offset = cc
-    #         rrow = rr>>1
-    #         ccol = cc>>1
-    #         ## color_1 (bayer top-left)
-    #         # lbyte = bayerdata[row_even_offset+col_offset]
-    #         # hbyte = bayerdata[row_even_offset+col_offset+1]
-    #         # pix_v = (hbyte*256 + lbyte) >> (rawBits-8)
-    #         pix_v = bayerdata[row_even_offset+col_offset] >> bitshift
-    #         simg1[rrow,ccol] = [pix_v for x in range(3)]
-
-    #         ## color_2 (bayer top-right)
-    #         # lbyte = bayerdata[row_even_offset+col_offset+2]
-    #         # hbyte = bayerdata[row_even_offset+col_offset+3]
-    #         # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
-    #         pix_v = bayerdata[row_even_offset+col_offset+1] >> bitshift
-    #         simg2[rrow,ccol] = [pix_v for x in range(3)]
-
-    #         ## color_3 (bayer bottom-left)
-    #         # lbyte = bayerdata[row_odd_offset+col_offset]
-    #         # hbyte = bayerdata[row_odd_offset+col_offset+1]
-    #         # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
-    #         pix_v = bayerdata[row_odd_offset+col_offset] >> bitshift
-    #         simg3[rrow,ccol] = [pix_v for x in range(3)]
-
-    #         ## color_4 (bayer bottom-right)
-    #         # lbyte = bayerdata[row_odd_offset+col_offset+2]
-    #         # hbyte = bayerdata[row_odd_offset+col_offset+3]
-    #         # pix_v = (hbyte*256 + lbyte)  >> (rawBits-8)
-    #         pix_v = bayerdata[row_odd_offset+col_offset+1] >> bitshift
-    #         simg4[rrow,ccol] = [pix_v for x in range(3)]
+    # print(imgRaw)
 
     save_bayer_img = { 
         0:save_raw_RGrGbB_image, 
@@ -145,18 +209,17 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
 
     func = save_bayer_img.get(bayerType, save_raw_XXXX_image)
     func(simg1, simg2, simg3, simg4)
-    btnRaw.config(text='Load RAW', command=cbfnButtonOpenRaw, bg='LightGray')
+    btnRaw.config(text='RESET', command=cbfnButtonReset, bg='LightBlue')
     #print(simg4)
     # plt.imshow(simg4); plt.show()
     # plt.imshow(simg3); plt.show()
     # plt.imshow(simg2); plt.show()
-    plt.imshow(simg1); plt.show()
+    # plt.imshow(simg1); plt.show()
     # plt.imshow(imgRaw); plt.show()
     # plt.imsave('./simg1.jpg', simg1)
     # plt.imsave('./simg2.jpg', simg2)
     # plt.imsave('./simg3.jpg', simg3)
     # plt.imsave('./simg4.jpg', simg4)
-
     return True
 
 
@@ -175,7 +238,10 @@ def cbfnButtonLoadRaw():
 # Button Function : OpenRAW
 ###########################################################
 def cbfnButtonOpenRaw():
-    global winMain, winTitle, txtlblRawFName, btnRaw, rawdata, rawfname
+    global winMain, winTitle, txtlblRawFName, btnRaw, btn
+    global rawdata, rawfname, gRawBaseName
+    global gIsShowBayerImage, chkShowBayerImg, gIsShowRawImage, chkShowRawImg
+
     rawfname = filedialog.askopenfilename()
     #print(rawfname)
     try:
@@ -186,10 +252,29 @@ def cbfnButtonOpenRaw():
     except:
         messageBoxOK('FileIO', 'Failed to open file :\n' + rawfname)
 
+    # Create root repository folder for output images
+    gImgRepoRoot = os.path.dirname(rawfname)
+    os.chdir(gImgRepoRoot)
+    gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
+    # print(gImgRepoRoot)
+
+    # Create folder to save output images for loaded RAW image
     baseName = os.path.basename(rawfname)
+    base, ext = os.path.splitext(baseName)
+    gImgRepoCurr = gImgRepoRoot + "/" + base
+    #print("Target image repo ", gImgRepoCurr)
+    if createDirectory(gImgRepoCurr):
+        os.chdir(gImgRepoCurr)
+
+    gRawBaseName = base
+    #print(gRawBaseName)
+
+    # modify title of main window
     winMain.title(winTitle+ ' -- ' + baseName)
 
     #btnRaw.config(text='Load RAW', command=cbfnButtonLoadRaw, bg='Yellow')
+    gIsShowBayerImage = chkShowBayerImg.get()
+    gIsShowRawImage = chkShowRawImg.get()
     cbfnButtonLoadRaw()
 
     return
@@ -214,16 +299,12 @@ if __name__ == "__main__":
     winTitle = 'Raw Viewer'
     winMain = Tk()
     winMain.title(winTitle)
-    winMain.geometry('400x150')
+    winMain.geometry('400x200')
 
     curRow, curCol = 0, 0
     # Button : Open RAW 
     btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
     btnRaw.grid(row=curRow, column=curCol, pady=2)
-
-    # Button : Exit
-    btnExit = Button(winMain, text='Exit', command=cbfnButtonMainExit, bg='Red')
-    btnExit.grid(row=curRow, column=7)
 
     curRow +=1
     lblRawWidth = Label(winMain, text='Width')
@@ -262,6 +343,22 @@ if __name__ == "__main__":
     entryRawBits = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawBits)
     entryRawBits.grid(row=curRow, column=1, sticky=W)
 
+    curRow += 1
+    Label(winMain, text='ShowImages').grid(row=curRow, column=0)
+    chkShowBayerImg = IntVar()
+    chkShowBayerImg.set(0)
+    btnShowBayerImg = Checkbutton(winMain, text='BayerColors', variable=chkShowBayerImg)
+    btnShowBayerImg.grid(row=curRow, column=1)
+
+    chkShowRawImg = IntVar()
+    chkShowRawImg.set(1)
+    btnShowRawImg = Checkbutton(winMain, text='RawGray', variable=chkShowRawImg)
+    btnShowRawImg.grid(row=curRow, column=2)
+
+    curRow += 2
+    # Button : Exit
+    btnExit = Button(winMain, text='-- EXIT --', command=cbfnButtonMainExit, fg='Yellow', bg='Red')
+    btnExit.grid(row=curRow, column=0)
 
 
     winMain.mainloop()
