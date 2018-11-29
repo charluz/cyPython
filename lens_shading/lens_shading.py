@@ -166,14 +166,17 @@ def save_raw_XXXX_image(img1, img2, img3, img4):
 
 
 ###########################################################
-# Function : Split Bayer Components
+# Function : Callback of Button RESET
 ###########################################################
 def cbfnButtonReset():
     cv2.destroyAllWindows()
     btnRaw.config(text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
 
 
-def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
+###########################################################
+# Function : Split Bayer Components
+###########################################################
+def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     '''
     @Brief 
         To split R/Gr/Gb/B components from Bayer Raw image input.
@@ -184,14 +187,14 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     @Out
         boolean : indicating success/failure
     @Globals
-        simg1, simg2, simg3, simg4 : sub-images of R/Gr/Gb/B. 
+        bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 : sub-images of R/Gr/Gb/B. 
             Size of sub-image is (widht/2, height/2).
     '''
-    global simg1, simg2, simg3, simg4
+    global bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4
 
     imgW, imgH = (int(width>>1))<<1, (int(height>>1)<<1)
     simgW, simgH =int(imgW>>1), int(imgH>>1)
-    simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
+    bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
 
     # print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
@@ -201,10 +204,10 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     imgRaw = bayerdata.reshape(imgH, imgW)
     saveRawGrayImage(imgRaw, bayerType)
 
-    simg1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
-    simg2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
-    simg3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
-    simg4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
+    bayerImgC1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
+    bayerImgC2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
+    bayerImgC3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
+    bayerImgC4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
 
     # print(imgRaw)
 
@@ -216,19 +219,19 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     }
 
     func = save_bayer_img.get(bayerType, save_raw_XXXX_image)
-    func(simg1, simg2, simg3, simg4)
+    func(bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4)
     btnRaw.config(text='RESET', command=cbfnButtonReset, bg='LightBlue')
 
-    #print(simg4)
-    # plt.imshow(simg4); plt.show()
-    # plt.imshow(simg3); plt.show()
-    # plt.imshow(simg2); plt.show()
-    # plt.imshow(simg1); plt.show()
+    #print(bayerImgC4)
+    # plt.imshow(bayerImgC4); plt.show()
+    # plt.imshow(bayerImgC3); plt.show()
+    # plt.imshow(bayerImgC2); plt.show()
+    # plt.imshow(bayerImgC1); plt.show()
     # plt.imshow(imgRaw); plt.show()
-    # plt.imsave('./simg1.jpg', simg1)
-    # plt.imsave('./simg2.jpg', simg2)
-    # plt.imsave('./simg3.jpg', simg3)
-    # plt.imsave('./simg4.jpg', simg4)
+    # plt.imsave('./bayerImgC1.jpg', bayerImgC1)
+    # plt.imsave('./bayerImgC2.jpg', bayerImgC2)
+    # plt.imsave('./bayerImgC3.jpg', bayerImgC3)
+    # plt.imsave('./bayerImgC4.jpg', bayerImgC4)
     return True
 
 
@@ -239,7 +242,7 @@ def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     # print("Button: Load RAW")
     try:
-        splitBayerRawWord(rawdata, int(txtlblRawWidth.get()), 
+        splitBayerRawU16(rawdata, int(txtlblRawWidth.get()), 
                         int(txtlblRawHeight.get()), 
                         int(txtlblRawBits.get()),  
                         bayerSelect.get())
