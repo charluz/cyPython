@@ -86,7 +86,7 @@ def saveRawGrayImage(rawImg, bayerCode):
     matGray = cv2.cvtColor(matRaw, code)
     matGray = matGray / 256
     matGray = matGray.astype(np.uint8)
-    print(matGray)
+    # print(matGray)
     win_title = "RAW_Gray"
     if gIsShowRawImage:
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
@@ -193,7 +193,7 @@ def splitBayerRawWord(bayerdata, width, height, rawBits, bayerType):
     simgW, simgH =int(imgW>>1), int(imgH>>1)
     simg1, simg2, simg3, simg4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
 
-    print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
+    # print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
     btnRaw.config(bg='Coral')
     bitshift = rawBits-8
@@ -273,7 +273,7 @@ def cbfnButtonOpenRaw():
     os.chdir(gImgRepoRoot)
     gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
     # print(gImgRepoRoot)
-import os, sys
+
     # Create folder to save output images for loaded RAW image
     baseName = os.path.basename(rawfname)
 
