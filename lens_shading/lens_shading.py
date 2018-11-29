@@ -32,13 +32,22 @@ bayer2gray_code = {
     3: cv2.COLOR_BAYER_BG2GRAY
 }
 
+bayer2bgr_code = {
+    0: cv2.COLOR_BAYER_RG2BGR,
+    1: cv2.COLOR_BAYER_GR2BGR,
+    2: cv2.COLOR_BAYER_GB2BGR,
+    3: cv2.COLOR_BAYER_BG2BGR
+}
+
 bayerImg_geometric = { # (X, Y)
     0: (300, 140),  # R
     1: (340, 170),  # Gr
     2: (380, 200),  # Gb
     3: (420, 230),  # B
-    100: (300, 300) # RawGray
+    100: (300, 300), # RawGray
+    101: (330, 330) # RawRGB
 }
+
 
 ###########################################################
 # Message Box with OK button
@@ -75,17 +84,27 @@ def createImageRepoRoot(cwd, name):
 
 
 ###########################################################
-# Functions : switch case dispatch to save R/Gr/Gb/B images
+# Function : Callback of Button RESET
+###########################################################
+def cbfnButtonReset():
+    cv2.destroyAllWindows()
+    btnRaw.config(text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
+
+
+
+###########################################################
+# Functions : saveRawGrayImage
 ###########################################################
 
 def saveRawGrayImage(rawImg, bayerCode):
     matRaw = rawImg << (16-int(txtlblRawBits.get()))
 
+    ## Bayer2Gray
     code = bayer2gray_code.get(bayerCode, cv2.COLOR_BAYER_RG2GRAY)
-    cv2.cvtColor(matRaw, code)
     matGray = cv2.cvtColor(matRaw, code)
     matGray = matGray / 256
     matGray = matGray.astype(np.uint8)
+
     # print(matGray)
     win_title = "RAW_Gray"
     if gIsShowRawImage:
@@ -101,9 +120,36 @@ def saveRawGrayImage(rawImg, bayerCode):
 
     jpgGray = gRawBaseName + "_" + win_title + '.jpg'
     cv2.imwrite(jpgGray, matGray)
+
+    ## Bayer2BGR
+    code = bayer2bgr_code.get(bayerCode, cv2.COLOR_BAYER_RG2BGR)
+    matBGR = cv2.cvtColor(matRaw, code)
+    matBGR = matBGR / 256
+    matBGR = matBGR.astype(np.uint8)
+
+    win_title = "RAW_RGB"
+    if gIsShowRawImage:
+        cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
+        x, y = bayerImg_geometric.get(101)
+        cv2.moveWindow(win_title, x, y)
+        
+        print(matBGR.shape)
+        h, w, c = matBGR.shape
+        if w > gMaxImgShowWidth:
+            h = int( (h * gMaxImgShowWidth) / w)
+            w = gMaxImgShowWidth
+        cv2.resizeWindow(win_title, w, h)
+        cv2.imshow(win_title, matBGR)
+
+    jpgRGB = gRawBaseName + "_" + win_title + '.jpg'
+    cv2.imwrite(jpgRGB, matBGR)
+
     return
     
 
+###########################################################
+# Functions : saveSplitedImage
+###########################################################
 def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
     img = imgGray.astype(np.uint8)
     matImg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
@@ -166,14 +212,6 @@ def save_raw_XXXX_image(img1, img2, img3, img4):
 
 
 ###########################################################
-# Function : Callback of Button RESET
-###########################################################
-def cbfnButtonReset():
-    cv2.destroyAllWindows()
-    btnRaw.config(text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
-
-
-###########################################################
 # Function : Split Bayer Components
 ###########################################################
 def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
@@ -202,27 +240,28 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     bitshift = rawBits-8
 
     imgRaw = bayerdata.reshape(imgH, imgW)
-    saveRawGrayImage(imgRaw, bayerType)
+    # saveRawGrayImage(imgRaw, bayerType)
 
     bayerImgC1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
     bayerImgC2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
     bayerImgC3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
     bayerImgC4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
 
-    # print(imgRaw)
+    bayerColor_LUT = [
+        { 'R':bayerImgC1, 'Gr':bayerImgC2, 'Gb':bayerImgC3, 'B':bayerImgC4 }, # Bayer-R
+        { 'Gr':bayerImgC1, 'R':bayerImgC2, 'B':bayerImgC3, 'Gb':bayerImgC4 }, # Bayer-Gr
+        { 'Gb':bayerImgC1, 'B':bayerImgC2, 'R':bayerImgC3, 'Gr':bayerImgC4 }, # Bayer-Gb
+        { 'B':bayerImgC1, 'Gb':bayerImgC2, 'Gr':bayerImgC3, 'R':bayerImgC4 } # Bayer-B
+    ] 
 
-    save_bayer_img = { 
-        0:save_raw_RGrGbB_image, 
-        1:save_raw_GrRBGb_image,
-        2:save_raw_GbBRGr_image,
-        3:save_raw_BGbGrR_image
-    }
+    h, w = bayerImgC1.shape
+    dictBayerImg = bayerColor_LUT[bayerType]
+    imR = dictBayerImg.get('R')
+    imG = dictBayerImg.get('Gr')
+    imB =  dictBayerImg.get('B')
+    show_RGB_shading3D(w, h, image_R=imR, image_G=imG, image_B=imB)
 
-    func = save_bayer_img.get(bayerType, save_raw_XXXX_image)
-    func(bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4)
     btnRaw.config(text='RESET', command=cbfnButtonReset, bg='LightBlue')
-
-    #print(bayerImgC4)
     # plt.imshow(bayerImgC4); plt.show()
     # plt.imshow(bayerImgC3); plt.show()
     # plt.imshow(bayerImgC2); plt.show()
@@ -295,6 +334,8 @@ def cbfnButtonOpenRaw():
     #btnRaw.config(text='Load RAW', command=cbfnButtonLoadRaw, bg='Yellow')
     gIsShowBayerImage = chkShowBayerImg.get()
     gIsShowRawImage = chkShowRawImg.get()
+
+    # to Load and Parse RAW images
     cbfnButtonLoadRaw()
 
     return

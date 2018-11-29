@@ -31,7 +31,13 @@ def show_bayer_shading3D(w, h, imgR):
 
 
 def show_RGB_shading3D(w, h, **kwargs):
-#def show_bayer_shading3D(imgR):
+    '''
+    Show 3D shading chart.
+
+    w, h : the width, height of the input images
+
+    image_R, image_G, image_B are used to specify the R/G/G images
+    '''
     useR, useG, useB = False, False, False
     for imageKey, imageValue in kwargs.items():
         #print("key= ", imageKey, "-- value= ", imageValue)
@@ -48,6 +54,9 @@ def show_RGB_shading3D(w, h, **kwargs):
         else:
             pass
 
+    ## Disable plot toolbar before creation of any figure !!
+    #cm.rcParams['toolbar'] = 'None'
+
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     #print("shape of imgR: ", imgR.shape)
@@ -60,15 +69,15 @@ def show_RGB_shading3D(w, h, **kwargs):
     # print("imgR.dtype ", imgR.dtype)
     if useR:
         surf0 = ax.plot_surface(X, Y, imgR, cmap=cm.Reds_r)
-        fig.colorbar(surf0, shrink=0.5, aspect=16)
+        #fig.colorbar(surf0, shrink=0.5, aspect=16)
 
     if useG:
         surf1 = ax.plot_surface(X, Y, imgG, cmap=cm.Greens_r)
-        fig.colorbar(surf1, shrink=0.5, aspect=16)
+        #fig.colorbar(surf1, shrink=0.5, aspect=16)
 
     if useB:
-        fig.colorbar(surf2, shrink=0.5, aspect=16)
         surf2 = ax.plot_surface(X, Y, imgB, cmap=cm.Blues_r)
+        #fig.colorbar(surf2, shrink=0.5, aspect=16)
 
     if useR or useG or useB:
         plt.show()
