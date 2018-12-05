@@ -357,7 +357,7 @@ def cbfnButtonMainExit():
 
 if __name__ == "__main__":
 
-    winTitle = 'Raw Viewer'
+    winTitle = 'Shading Viewer'
     winMain = Tk()
     winMain.title(winTitle)
     winMain.geometry('400x200')
