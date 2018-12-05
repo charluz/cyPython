@@ -23,6 +23,13 @@ gIsShowBayerImage = 0
 gIsShowRawImage = 1
 gMaxImgShowWidth = 640
 
+bayerCode_Table = {
+    'bayerR':  0,
+    'bayerGr': 1,
+    'bayerGb': 2,
+    'bayerB':  3
+}
+
 bayer2gray_code = {
     0: cv2.COLOR_BAYER_RG2GRAY,
     1: cv2.COLOR_BAYER_GR2GRAY,
@@ -45,6 +52,13 @@ bayerImg_geometric = { # (X, Y)
     100: (300, 300), # RawGray
     101: (330, 330) # RawRGB
 }
+
+
+###########################################################
+# Bayer Color lookup functions
+###########################################################
+def bayerCode_Name2ID(szName):
+    return bayerCode_Table.get(szName, 0)
 
 
 ###########################################################
@@ -345,6 +359,25 @@ def cbfnButtonMainExit():
     winMain.destroy()
     return
 
+###########################################################
+# Button Function : Set Project RAW 
+###########################################################
+def config_raw_image_format(szWidth, szHeight, szBits, szBayeName):
+    txtlblRawWidth.set(szWidth)
+    txtlblRawHeight.set(szHeight)
+    txtlblRawBits.set(szBits)
+    bayerSelect.set(szBayeName)
+
+
+def cbfnButtonConfigAntmanOS05A20():
+    config_raw_image_format('2560', '1440', '10', bayerCode_Name2ID('bayerB'))
+
+def cbfnButtonConfigAntmanAR0330():
+    config_raw_image_format('2304', '1296', '10', bayerCode_Name2ID('bayerB'))
+
+def cbfnButtonConfigHawkeye():
+    config_raw_image_format('1920', '1080', '14', bayerCode_Name2ID('bayerR'))
+
 
 
 ###########################################################
@@ -356,12 +389,23 @@ if __name__ == "__main__":
     winTitle = 'Raw Viewer'
     winMain = Tk()
     winMain.title(winTitle)
-    winMain.geometry('400x200')
+    winMain.geometry('460x200')
 
     curRow, curCol = 0, 0
     # Button : Open RAW 
     btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
-    btnRaw.grid(row=curRow, column=curCol, pady=2)
+    btnRaw.grid(row=curRow, column=0, pady=2)
+
+    btnCfgAntman = Button(winMain, text='antOS05A20', command=cbfnButtonConfigAntmanOS05A20, bg='Yellow')
+    btnCfgAntman.grid(row=curRow, column=2, pady=2)
+
+    btnCfgAntman = Button(winMain, text='antAR0330', command=cbfnButtonConfigAntmanAR0330, bg='SlateGray1')
+    btnCfgAntman.grid(row=curRow, column=3, pady=2)
+
+    btnCfgAntman = Button(winMain, text='Hawkeye', command=cbfnButtonConfigHawkeye, bg='PaleGreen')
+    btnCfgAntman.grid(row=curRow, column=4, pady=2)
+
+
 
     curRow +=1
     lblRawWidth = Label(winMain, text='Width')
