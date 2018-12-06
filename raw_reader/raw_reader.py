@@ -360,7 +360,7 @@ def cbfnButtonMainExit():
     return
 
 ###########################################################
-# Button Function : Set Project RAW 
+# Button Function : Set Project RAW format
 ###########################################################
 def config_raw_image_format(szWidth, szHeight, szBits, szBayeName):
     txtlblRawWidth.set(szWidth)
@@ -373,7 +373,7 @@ def cbfnButtonConfigAntmanOS05A20():
     config_raw_image_format('2560', '1440', '10', bayerCode_Name2ID('bayerB'))
 
 def cbfnButtonConfigAntmanAR0330():
-    config_raw_image_format('2304', '1296', '10', bayerCode_Name2ID('bayerB'))
+    config_raw_image_format('2304', '1296', '10', bayerCode_Name2ID('bayerGr'))
 
 def cbfnButtonConfigHawkeye():
     config_raw_image_format('1920', '1080', '14', bayerCode_Name2ID('bayerR'))
