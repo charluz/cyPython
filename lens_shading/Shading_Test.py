@@ -25,6 +25,12 @@ gIsShowBayerImage = 0
 gIsShowRawImage = 1
 gMaxImgShowWidth = 640
 
+gOpenFileName=''
+gSrcImgName=''
+gSrcImgDir=''
+gSrcImgBase=''
+gSrcImgExt=''
+
 bayer2gray_code = {
     0: cv2.COLOR_BAYER_RG2GRAY,
     1: cv2.COLOR_BAYER_GR2GRAY,
@@ -58,6 +64,29 @@ def messageBoxOK(title, msg):
     Label(box, text=msg).pack()
     Button(box, text='OK', command=box.destroy).pack()
 
+###########################################################
+# Function: Parse file's path/basename/extname
+###########################################################
+def parse_file_path(fpath):
+
+    print('Input filename: ', fpath)
+
+    # Create root repository folder for output images
+    fdir = os.path.dirname(fpath)
+    ffile = os.path.basename(fpath)
+    fbase, fext = os.path.splitext(ffile)
+    # try:
+    #     fdir = os.path.dirname(fpath)
+    #     ffile = os.path.basename(fpath)
+    #     fbase, fext = os.path.splitext(ffile)
+    # except:
+    #     print("Error: failed to parse file path, name.")
+    #     return '', '', ''
+
+    print('Directory: ', fdir)
+    print("fbase= ", fbase, 'fext= ', fext)
+
+    return fdir, fbase, fext
 
 
 ###########################################################
@@ -65,16 +94,15 @@ def messageBoxOK(title, msg):
 ###########################################################
 def cbfnButtonReset():
     cv2.destroyAllWindows()
-    btnSelectIMG.config(text='Open RAW', command=cbfnButton_SelectIMG, bg='LightGreen')
+    btnSelectIMG.config(text='Select Image', command=cbfnButton_SelectIMG, bg='LightGreen')
 
 
 ###########################################################
-# Button Function : SelectIMG
+# Function : cbfn_Update()
 ###########################################################
 def cbfn_Update():
     global scl_windowSize, scl_fieldDiag, scl_fieldHV
     global var_chkLuma, var_chkChroma
-
     global var_chkHori, var_chkVert
 
     # -- 
@@ -92,54 +120,40 @@ def cbfn_Update():
 # Button Function : SelectIMG
 ###########################################################
 def cbfnButton_SelectIMG():
-    '''
-    global winRoot, winTitle, txtlblRawFName, btnSelectIMG, btn
-    global rawdata, rawfname, gRawBaseName
-    global gIsShowBayerImage, chkShowBayerImg, gIsShowRawImage, chkShowRawImg
+    global gOpenFileName, gSrcImgName, gSrcImgDir, gSrcImgBase, gSrcImgExt
+    gOpenFileName = filedialog.askopenfilename()
 
-    rawfname = filedialog.askopenfilename()
+    gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
+    # try:
+    #     # f = open(gOpenFileName, 'rb')
+    #     # rawdata = f.read()
+    #     # f.close()
+    #     # rawdata = np.fromfile(gOpenFileName, dtype=np.uint16)
+    #     gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
+    # except:
+    #     messageBoxOK('FileIO', 'Failed to open file :\n' + gOpenFileName)
+    #     cbfnButtonReset()
+    #     return
 
-    #print(rawfname)
-    try:
-        # f = open(rawfname, 'rb')
-        # rawdata = f.read()
-        # f.close()
-        rawdata = np.fromfile(rawfname, dtype=np.uint16)
-    except:
-        messageBoxOK('FileIO', 'Failed to open file :\n' + rawfname)
-        cbfnButtonReset()
-        return
+    # -- modify title of main window, change button to RESET
+    gSrcImgName = gSrcImgBase + gSrcImgExt
+    winRoot.title(winTitle+ ' -- ' + gSrcImgName)
+    btnSelectIMG.config(text='RESET', command=cbfnButtonReset, bg='Yellow')
 
-    # Create root repository folder for output images
-    gImgRepoRoot = os.path.dirname(rawfname)
-    os.chdir(gImgRepoRoot)
-    gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
-    # print(gImgRepoRoot)
+    # -- Open and show image with CV2
+    os.chdir(gSrcImgDir)
+    matImg = cv2.imread(gSrcImgName)
+    # print(matImg.shape)
+    # try:
+    #     matImg = cv2.imread(gOpenFileName, 0)
+    # except:
+    #     messageBoxOK('FileIO', 'CV2 failed to load image file :\n' + gOpenFileName)
+    #     cbfnButtonReset()
+    #     return
+    cv2NameWindpw = cv2.namedWindow(gSrcImgName, cv2.WINDOW_NORMAL)
+    cv2.imshow(cv2NameWindpw, matImg)
 
-    # Create folder to save output images for loaded RAW image
-    baseName = os.path.basename(rawfname)
-
-    base, ext = os.path.splitext(baseName)
-    gImgRepoCurr = gImgRepoRoot + "/" + base
-    #print("Target image repo ", gImgRepoCurr)
-    if createDirectory(gImgRepoCurr):
-        os.chdir(gImgRepoCurr)
-
-    gRawBaseName = base
-    #print(gRawBaseName)
-
-    # modify title of main window
-    winRoot.title(winTitle+ ' -- ' + baseName)
-
-    #btnSelectIMG.config(text='Load RAW', command=cbfnButtonLoadRaw, bg='Yellow')
-    gIsShowBayerImage = chkShowBayerImg.get()
-    gIsShowRawImage = chkShowRawImg.get()
-
-    # to Load and Parse RAW images
-    cbfnButtonLoadRaw()
-    '''
-    print("Button: SelectIMG")
-
+    cv2.waitKey(0)
     return
 
  
@@ -162,7 +176,7 @@ if __name__ == "__main__":
     winTitle = 'Shading Test'
     winRoot = Tk()
     winRoot.title(winTitle)
-    winRoot.geometry('400x300')
+    winRoot.geometry('400x300+150+100')
 
     # -- Create Top/Mid/Buttom frames
     frame_padx = 2
