@@ -144,8 +144,19 @@ class roiRect():
 
 
 class ImageROI():
-    def __init__(self):
-        self.ROIs = []
+    '''
+    class to organize multiple ROIs of an image.
+        Create instant: ImageROI(winName, matImg) where
+            winName is the name of a CV2 namedWindow
+            matImg is the CV2 matrix of the target image
+    '''
+    def __init__(self, winName, matImg):
+        self.ROIs = {}  # -- use Dictionary key="roiName", val=roiRect
+        self.winName = winName
+        self.matImg = matImg
+
+    def add(self, name, roi):
+        self.ROIs.set(name, roi)
         pass
 
 ###########################################################
