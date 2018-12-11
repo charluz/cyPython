@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import os, sys
+import _thread
+import time
 
 from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
 from tkinter import filedialog
@@ -107,13 +109,12 @@ def cbfn_Update():
 
     # -- 
     if 1==var_chkHori.get() or 1==var_chkVert.get():
-        print("I am here: True")
         scl_fieldHV.config(state= NORMAL)
     else:
-        print("I am here: False")
         scl_fieldHV.config(state= DISABLED)
 
-    print("callBack: Update")
+    #print("callBack: Update")
+    return
 
 
 ###########################################################
@@ -123,17 +124,17 @@ def cbfnButton_SelectIMG():
     global gOpenFileName, gSrcImgName, gSrcImgDir, gSrcImgBase, gSrcImgExt
     gOpenFileName = filedialog.askopenfilename()
 
-    gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
-    # try:
-    #     # f = open(gOpenFileName, 'rb')
-    #     # rawdata = f.read()
-    #     # f.close()
-    #     # rawdata = np.fromfile(gOpenFileName, dtype=np.uint16)
-    #     gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
-    # except:
-    #     messageBoxOK('FileIO', 'Failed to open file :\n' + gOpenFileName)
-    #     cbfnButtonReset()
-    #     return
+    #gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
+    try:
+        # f = open(gOpenFileName, 'rb')
+        # rawdata = f.read()
+        # f.close()
+        # rawdata = np.fromfile(gOpenFileName, dtype=np.uint16)
+        gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
+    except:
+        messageBoxOK('FileIO', 'Failed to open file :\n' + gOpenFileName)
+        cbfnButtonReset()
+        return
 
     # -- modify title of main window, change button to RESET
     gSrcImgName = gSrcImgBase + gSrcImgExt
@@ -142,18 +143,31 @@ def cbfnButton_SelectIMG():
 
     # -- Open and show image with CV2
     os.chdir(gSrcImgDir)
-    matImg = cv2.imread(gSrcImgName)
+    # matImg = cv2.imread(gSrcImgName)
     # print(matImg.shape)
-    # try:
-    #     matImg = cv2.imread(gOpenFileName, 0)
-    # except:
-    #     messageBoxOK('FileIO', 'CV2 failed to load image file :\n' + gOpenFileName)
-    #     cbfnButtonReset()
-    #     return
-    cv2NameWindpw = cv2.namedWindow(gSrcImgName, cv2.WINDOW_NORMAL)
-    cv2.imshow(cv2NameWindpw, matImg)
+    try:
+        matImg = cv2.imread(gOpenFileName)
+        cv2.namedWindow(gSrcImgName, cv2.WINDOW_AUTOSIZE)
+        cv2.imshow(gSrcImgName, matImg)
+    except:
+        messageBoxOK('FileIO', 'CV2 failed to load image file :\n' + gOpenFileName)
+        cbfnButtonReset()
+        return
 
-    cv2.waitKey(0)
+    # -- Now, create a thread to watch the status of the window
+    def PROC_check_window_status(namedWin, slp_time):
+        while True:
+            if cv2.getWindowProperty(namedWin, 1) < 0:
+                cbfnButtonReset()
+                break
+            time.sleep(slp_time)
+
+    try:
+        _thread.start_new_thread(PROC_check_window_status, (gSrcImgName, 0.2))
+    except:
+        print("Error, failed to create new thread to watch named window: ", gSrcImgName)
+        return
+
     return
 
  
