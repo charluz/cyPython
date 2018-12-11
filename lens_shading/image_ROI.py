@@ -38,27 +38,28 @@ def interpolateXY(P0, P1, fraction):
 
 
 class drawROI():
-    _property = {
-        'enabled'       : True,
-        'lwidth'        : 1,
-        'lcolor'        : (0, 255, 0),
-    }
-
-    gWinName=''
-    gMatImg=np.array([])
-    X = Y = W = H = 0
     def __init__(self, winName, matImg, **kwargs):
+        ''' '''
+        self._property = {
+            'enabled'       : True,
+            'lwidth'        : 1,
+            'lcolor'        : (0, 255, 0),
+        }
         self.gWinName = winName
         self.gMatImg = matImg
+        self.Xc, self.Yc, self.W, self.H = (1, 1, 2, 2)
+        self.Vertex0 = (0, 0)
+        self.Vertex1 = (2, 2)
+        self.is_dirty = True
         #cv2.imshow(self.gWinName, self.gMatImg)
         for argKey, argVal in kwargs.items():
             #print("ImageROI: argKey= ", argKey, " argVal= ", argVal)
-            if argKey == 'X':
-                '''coordinate X of top-left vertex '''
-                self.X = argVal
-            elif argKey == 'Y':
-                '''center coordinate Y'''
-                self.Y = argVal
+            if argKey == 'Xc':
+                '''coordinate X of ROI center '''
+                self.Xc = argVal
+            elif argKey == 'Yc':
+                '''coordinate Y of ROI center '''
+                self.Yc = argVal
             elif argKey == 'W':
                 '''size W'''
                 self.W = argVal
@@ -68,15 +69,20 @@ class drawROI():
             else:
                 pass
                 
+
     def set_center(self, x, y):
         ''' Set coordinate (x, y) of the ROI center'''
-        self.X = x
-        self.Y = y
+        self.Xc = x
+        self.Yc = y
+        self.is_dirty = True
         
+
     def set_size(self, w, h):
         ''' Set size (w, h) of the ROI'''
         self.W = w
         self.H = h
+        self.is_dirty = True
+
 
     def set_property(self, **kwargs):
         ''' Set properities :
@@ -84,6 +90,7 @@ class drawROI():
                 lwidth:     width of rectangle line
                 lcolor:     the color to draw rectangle (R, G, B)
         '''
+        self.is_dirty = True
         for argkey, argval in kwargs.items():
             if argkey == 'enabled':
                 self._property['enabled'] = argval   # True or False
@@ -94,23 +101,46 @@ class drawROI():
             else:
                 pass
 
+
     def get_property(self, protKey):
         '''To query property with following key:
                 'enabled', 'lwidth', 'lcolor'
         '''
-        return self._property[prot]
-    
-    def show(self):
+        return self._property[protKey]
+
+
+    def update(self):
+        ''' To re-calculate the ROI Vertex0 and Vertex1 
+
+            Return: (Vertex0, Vertex1) 
+                where Vertex0, Vertex1 is coordinates of top-left, and bottom-right
+        '''
+        halfW = int(self.W/2)
+        halfH = int(self.H/2)
+        p0 = (MAX_AB(0, self.Xc-halfW), MAX_AB(0, self.Yc-halfH))
+        p1 = (MIN_AB(self.gMatImg.shape[1], self.Xc+halfW), MIN_AB(self.gMatImg.shape[0], self.Yc+halfH))
+        self.Vertex0 = p0
+        self.Vertex1 = p1
+        self.is_dirty = False
+        return (p0, p1)
+
+
+    def draw(self):
         ''' To draw the ROI rectangle onto the image'''
+        if self.is_dirty:
+            self.update()
+
         if self._property['enabled'] == True:
-            halfW = int(self.W/2)
-            halfH = int(self.H/2)
-            p1 = (self.X-halfW, self.Y-halfH)
-            p2 = (self.X+halfW, self.Y+halfH)
             color = self._property['lcolor']
             lwidth = self._property['lwidth']
-            cv2.rectangle(self.gMatImg, p1, p2, color, lwidth)
-            cv2.imshow(self.gWinName, self.gMatImg)
+            cv2.rectangle(self.gMatImg, self.Vertex0, self.Vertex1, color, lwidth)
+            ## cv2.imshow(self.gWinName, self.gMatImg)
+
+
+    def show(self):
+        ''' To display the image with ROIs imprinted '''
+        self.draw()
+        cv2.imshow(self.gWinName, self.gMatImg)
 
 
 ###########################################################
@@ -144,19 +174,21 @@ def main():
     roiC=drawROI(winName, mat2draw)
     roiC.set_center(imgCenterX, imgCenterY)
     roiC.set_size(roiW, roiH)
+    roiC.set_property(lcolor=(0, 0, 255))
+    # roiC.set_property(enabled=False)
     roiC.show()
 
     #--------------------------
     # -- Diagonal: Qudrant Q1, Q2, Q3, Q4
     #--------------------------
 
-    fraction = 0.95
+    fraction = 0.65
     # -- Q1
     Po = (imgCenterX, imgCenterY)
     Pv = (imgW, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q1: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ1 = drawROI(winName, mat2draw, X=x, Y=y, W=roiW, H=roiH)
+    roiQ1 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ1.show()
 
     # -- Q2
@@ -164,7 +196,7 @@ def main():
     Pv = (0, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q2: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ2 = drawROI(winName, mat2draw, X=x, Y=y, W=roiW, H=roiH)
+    roiQ2 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ2.show()
 
     # -- Q3
@@ -172,7 +204,7 @@ def main():
     Pv = (0, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q3: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ3 = drawROI(winName, mat2draw, X=x, Y=y, W=roiW, H=roiH)
+    roiQ3 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ3.show()
 
     # -- Q4
@@ -180,13 +212,17 @@ def main():
     Pv = (imgW, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q4: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ4 = drawROI(winName, mat2draw, X=x, Y=y, W=roiW, H=roiH)
+    roiQ4 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ4.show()
 
-    ''' Just for Debug
-    cv2.namedWindow('Original')
-    cv2.imshow('Original', matImg)
-    '''
+
+    if False:
+        # -- Just for Debug
+        cv2.namedWindow('Original')
+        cv2.imshow('Original', mat2draw)
+    
+
+
     cv2.waitKey(0)
 
 
