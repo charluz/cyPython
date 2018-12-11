@@ -162,7 +162,7 @@ def main():
     imgW = matImg.shape[1]
     imgCenterX = int(imgW / 2)
     imgCenterY = int(imgH / 2)
-    print('image WxH = ', imgW, ' x ', imgH)
+    print('image WxH = ', imgW, '*', imgH)
 
     roiW = int(imgW/10)
     roiH = int(imgH/10)
@@ -214,6 +214,47 @@ def main():
     print("Q4: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
     roiQ4 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ4.show()
+
+
+    fraction = 0.85
+    #--------------------------
+    # -- Latitude(Horizontal): Hr (right), Hl (left)
+    #--------------------------
+    Po = (imgCenterX, imgCenterY)
+    Pv = (imgW, int(imgH/2))
+    x, y = interpolateXY(Po, Pv, fraction)
+    print("Hr: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
+    roiHr = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiHr.set_property(lcolor=(255,0, 255))
+    roiHr.show()
+
+    Po = (imgCenterX, imgCenterY)
+    Pv = (0, int(imgH/2))
+    x, y = interpolateXY(Po, Pv, fraction)
+    print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
+    roiHl = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiHl.set_property(lcolor=(255,0, 255))
+    roiHl.show()
+
+    #--------------------------
+    # -- Longitude(Vertical): Vt (top), Vb (bottom)
+    #--------------------------
+    Po = (imgCenterX, imgCenterY)
+    Pv = (int(imgW/2), 0)
+    x, y = interpolateXY(Po, Pv, fraction)
+    print("Vt: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
+    roiVt = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiVt.set_property(lcolor=(100, 255, 255))
+    roiVt.show()
+
+    Po = (imgCenterX, imgCenterY)
+    Pv = (int(imgW/2), imgH)
+    x, y = interpolateXY(Po, Pv, fraction)
+    print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
+    roiHl = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiHl.set_property(lcolor=(100, 255, 255))
+    roiHl.show()
+
 
 
     if False:
