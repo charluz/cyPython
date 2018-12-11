@@ -37,7 +37,7 @@ def interpolateXY(P0, P1, fraction):
     return (x, y)
 
 
-class drawROI():
+class roiRect():
     def __init__(self, winName, matImg, **kwargs):
         ''' '''
         self._property = {
@@ -143,6 +143,11 @@ class drawROI():
         cv2.imshow(self.gWinName, self.gMatImg)
 
 
+class ImageROI():
+    def __init__(self):
+        self.ROIs = []
+        pass
+
 ###########################################################
 # MainEntry 
 ###########################################################
@@ -169,9 +174,9 @@ def main():
     #--------------------------
     # -- Center ROI
     #--------------------------
-    #roiC=drawROI(winName, matImg.copy(), X=10, Y=20, W=100, H=50)
+    #roiC=roiRect(winName, matImg.copy(), X=10, Y=20, W=100, H=50)
     mat2draw = matImg.copy()
-    roiC=drawROI(winName, mat2draw)
+    roiC=roiRect(winName, mat2draw)
     roiC.set_center(imgCenterX, imgCenterY)
     roiC.set_size(roiW, roiH)
     roiC.set_property(lcolor=(0, 0, 255))
@@ -188,7 +193,7 @@ def main():
     Pv = (imgW, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q1: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ1 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiQ1 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ1.show()
 
     # -- Q2
@@ -196,7 +201,7 @@ def main():
     Pv = (0, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q2: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ2 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiQ2 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ2.show()
 
     # -- Q3
@@ -204,7 +209,7 @@ def main():
     Pv = (0, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q3: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ3 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiQ3 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ3.show()
 
     # -- Q4
@@ -212,7 +217,7 @@ def main():
     Pv = (imgW, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q4: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ4 = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiQ4 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiQ4.show()
 
 
@@ -224,7 +229,7 @@ def main():
     Pv = (imgW, int(imgH/2))
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hr: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiHr = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiHr = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiHr.set_property(lcolor=(255,0, 255))
     roiHr.show()
 
@@ -232,7 +237,7 @@ def main():
     Pv = (0, int(imgH/2))
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiHl = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiHl = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiHl.set_property(lcolor=(255,0, 255))
     roiHl.show()
 
@@ -243,7 +248,7 @@ def main():
     Pv = (int(imgW/2), 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Vt: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiVt = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiVt = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiVt.set_property(lcolor=(100, 255, 255))
     roiVt.show()
 
@@ -251,7 +256,7 @@ def main():
     Pv = (int(imgW/2), imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiHl = drawROI(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
+    roiHl = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
     roiHl.set_property(lcolor=(100, 255, 255))
     roiHl.show()
 
