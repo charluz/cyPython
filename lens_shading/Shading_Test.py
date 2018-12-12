@@ -9,52 +9,25 @@ from tkinter import filedialog
 import cv2
 
 import numpy as np
-import matplotlib.pyplot as plt
-from show_shading3D import show_RGB_shading3D
+# import matplotlib.pyplot as plt
+# from show_shading3D import show_RGB_shading3D
 
+import image_ROI as ROI
 
 '''
 from tkFileDialog import askopenfilename
 
-That code would have worked fine in Python 2.x, but it is no longer valid. 
+That code would have worked fine in Python 2.x, but it is no longer valid.
 In Python 3.x, tkFileDialog was renamed to filedialog.
 '''
-
-gImgRepoRoot = repr(os.getcwd())
-gImgRepoCurr = gImgRepoRoot
-gRawBaseName = ""
-gIsShowBayerImage = 0
-gIsShowRawImage = 1
-gMaxImgShowWidth = 640
 
 gOpenFileName=''
 gSrcImgName=''
 gSrcImgDir=''
 gSrcImgBase=''
 gSrcImgExt=''
+gIsImgOpened=False
 
-bayer2gray_code = {
-    0: cv2.COLOR_BAYER_RG2GRAY,
-    1: cv2.COLOR_BAYER_GR2GRAY,
-    2: cv2.COLOR_BAYER_GB2GRAY,
-    3: cv2.COLOR_BAYER_BG2GRAY
-}
-
-bayer2bgr_code = {
-    0: cv2.COLOR_BAYER_RG2BGR,
-    1: cv2.COLOR_BAYER_GR2BGR,
-    2: cv2.COLOR_BAYER_GB2BGR,
-    3: cv2.COLOR_BAYER_BG2BGR
-}
-
-bayerImg_geometric = { # (X, Y)
-    0: (300, 140),  # R
-    1: (340, 170),  # Gr
-    2: (380, 200),  # Gb
-    3: (420, 230),  # B
-    100: (300, 300), # RawGray
-    101: (330, 330) # RawRGB
-}
 
 
 ###########################################################
@@ -100,6 +73,73 @@ def cbfnButtonReset():
 
 
 ###########################################################
+# Function: Create shadingRect list
+###########################################################
+def calculate_shading_globals(matWC):
+    global gImgH, gImgW, gImgXc, gImgYc
+    global gRoiW, gRoiH
+
+    gImgH = matWC.shape[0]
+    gImgW = matWC.shape[1]
+    gImgXc = int(gImgW / 2)
+    gImgYc = int(gImgH / 2)
+    print('image WxH = ', gImgW, '*', gImgH, " (Xc, Yc)= ", (gImgXc, gImgYc))
+
+    wsize_ratio = scl_windowSize.get() / 100
+    gRoiW = int(gImgW * wsize_ratio)
+    gRoiH = int(gImgH * wsize_ratio)
+
+
+def set_QHV_rect(rect_name, Po, Pv, fraction):
+    x, y = ROI.interpolateXY(Po, Pv, fraction)
+    print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
+    rect = gShadingRECT.new_rect(rect_name)
+    rect.set_center(x, y)
+    rect.set_size(gRoiW, gRoiH)
+    gShadingRECT.add(rect_name, rect)
+
+def create_shadingRECT(nw, img):
+    global gImgH, gImgW, gImgXc, gImgYc
+    global gRoiW, gRoiH
+    global gShadingRECT
+
+    #-- Center: C0
+    rect_name='C0'
+    rect = gShadingRECT.new_rect(rect_name)
+    rect.set_center(gImgXc, gImgYc)
+    rect.set_size(gRoiW, gRoiH)
+    gShadingRECT.add(rect_name, rect)
+
+    #-- Quadrants: Q1, Q2, Q3, Q4
+    fraction = scl_fieldDiag.get()
+    Po = (gImgXc, gImgYc)
+    Q1param = { 'name':'Q1', 'Pv':(gImgW, 0) }
+    Q2param = { 'name':'Q2', 'Pv':(0, 0) }
+    Q3param = { 'name':'Q3', 'Pv':(0, gImgH) }
+    Q4param = { 'name':'Q4', 'Pv':(gImgW, gImgH) }
+    Qplist = [ Q1param, Q2param, Q3param, Q4param ]
+    for Qp in Qplist:
+        set_QHV_rect(Qp['name'], Po, Qp['Pv'], fraction)
+
+    #-- Latitude (Horizontal): Hr(right), Hl(left)
+    fraction = scl_fieldHV.get()
+    Hrparam = { 'name':'Hr', 'Pv':(gImgW, int(gImgH/2)) }
+    Hlparam = { 'name':'Hl', 'Pv':(0, int(gImgH/2)) }
+    Hplist = [ Hrparam, Hlparam ]
+    for Hp in Hplist:
+        set_QHV_rect(Hp['name'], Po, Hp['Pv'], fraction)
+
+    #-- Longitude (Vertical): Vt(top), Vb(bottom)
+    fraction = scl_fieldHV.get()
+    Vtparam = { 'name':'Vt', 'Pv':(int(gImgW/2), 0) }
+    Vbparam = { 'name':'Vb', 'Pv':(int(gImgW/2), gImgH) }
+    Vplist = [ Vtparam, Vbparam ]
+    for Vp in Vplist:
+        set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
+
+
+
+###########################################################
 # Function : cbfn_Update()
 ###########################################################
 def cbfn_Update():
@@ -107,7 +147,6 @@ def cbfn_Update():
     global var_chkLuma, var_chkChroma
     global var_chkHori, var_chkVert
 
-    # -- 
     if 1==var_chkHori.get() or 1==var_chkVert.get():
         scl_fieldHV.config(state= NORMAL)
     else:
@@ -122,6 +161,9 @@ def cbfn_Update():
 ###########################################################
 def cbfnButton_SelectIMG():
     global gOpenFileName, gSrcImgName, gSrcImgDir, gSrcImgBase, gSrcImgExt
+    global gImgH, gImgW, gImgXc, gImgYc
+    global gRoiW, gRoiH
+
     gOpenFileName = filedialog.askopenfilename()
 
     #gSrcImgDir, gSrcImgBase, gSrcImgExt = parse_file_path(gOpenFileName)
@@ -146,9 +188,9 @@ def cbfnButton_SelectIMG():
     # matImg = cv2.imread(gSrcImgName)
     # print(matImg.shape)
     try:
-        matImg = cv2.imread(gOpenFileName)
-        cv2.namedWindow(gSrcImgName, cv2.WINDOW_AUTOSIZE)
-        cv2.imshow(gSrcImgName, matImg)
+        matImg = cv2.imread(gOpenFileName, cv2.IMREAD_UNCHANGED)
+        cv2.namedWindow(gSrcImgName, cv2.WINDOW_NORMAL)
+        # cv2.imshow(gSrcImgName, matImg)
     except:
         messageBoxOK('FileIO', 'CV2 failed to load image file :\n' + gOpenFileName)
         cbfnButtonReset()
@@ -168,24 +210,43 @@ def cbfnButton_SelectIMG():
         print("Error, failed to create new thread to watch named window: ", gSrcImgName)
         return
 
+
+    #-------------------------------------------
+    # Create shading Rectangles
+    #-------------------------------------------
+    global gShadingRECT
+    matWorkCopy = matImg.copy()
+    gShadingRECT  = ROI.ImageROI(gSrcImgName, matWorkCopy)
+    calculate_shading_globals(matWorkCopy)
+    create_shadingRECT(gSrcImgName, matWorkCopy)
+
+    gShadingRECT.show()
     return
 
- 
+
 ###########################################################
 # Button Function : Exit Main Window
 ###########################################################
 def cbfnButtonMainExit():
+    global winRoot
+
     cv2.destroyAllWindows()
     winRoot.destroy()
-    return
+
 
 
 
 ###########################################################
-# MainEntry 
+# MainEntry
 ###########################################################
 
-if __name__ == "__main__":
+def main():
+    global winTitle, winRoot
+    global scl_windowSize, scl_fieldDiag, scl_fieldHV
+    global var_chkLuma, var_chkChroma
+    global var_chkHori, var_chkVert
+    global gOpenFileName, gSrcImgName, gSrcImgDir, gSrcImgBase, gSrcImgExt
+    global btnSelectIMG
 
     winTitle = 'Shading Test'
     winRoot = Tk()
@@ -197,7 +258,7 @@ if __name__ == "__main__":
     frame_pady = 2
     frmTop = Frame(winRoot)
     frmTop.pack(fill=X, padx=frame_padx, pady=frame_pady)
-    
+
     frmMid1 = Frame(winRoot)
     frmMid1.pack(fill=X, padx=frame_padx, pady=frame_pady)
 
@@ -220,7 +281,7 @@ if __name__ == "__main__":
     var_chkLuma = IntVar(value=1)
     chkbtn_Luma = Checkbutton(frmMid1, text='Luma')
     chkbtn_Luma.pack(side=LEFT)
-    
+
     var_chkChroma = IntVar(value=1)
     chkbtn_Chroma = Checkbutton(frmMid1, text='Chroma')
     chkbtn_Chroma.pack(side=LEFT)
@@ -240,7 +301,7 @@ if __name__ == "__main__":
     frmMidRight = Frame(frmMid2, bg='Yellow')
     frmMidRight.pack(side=LEFT, padx=24)
 
-    
+
     # -- Frame: MidLeft
     lbl_t = Label(frmMidLeft, anchor=W, text="Image Field:").pack(expand=True, fill=X)
 
@@ -262,7 +323,7 @@ if __name__ == "__main__":
     var_chkHori = IntVar(value=0)
     chkbtn_Hori = Checkbutton(frmMidRight, anchor=W, variable=var_chkHori, text='Horizontal', command=cbfn_Update)
     chkbtn_Hori.pack(side=TOP, expand=True, fill=X)
-    
+
     var_chkVert = IntVar(value=0)
     chkbtn_Vert = Checkbutton(frmMidRight, anchor=W, variable=var_chkVert, text='Vertical', command=cbfn_Update)
     chkbtn_Vert.pack(side=TOP, expand=True, fill=X)
@@ -272,3 +333,6 @@ if __name__ == "__main__":
 
     winRoot.mainloop()
 
+
+if __name__ == "__main__":
+    main()

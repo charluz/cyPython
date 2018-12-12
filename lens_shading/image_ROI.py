@@ -14,16 +14,16 @@ MAX_AB = lambda A, B : A if A > B else B
 MIN_AB = lambda A, B : A if A < B else B
 
 def interpolateXY(P0, P1, fraction):
-    ''' To interpolate coordinate of a point which is on the line from  P0 to P1 
+    ''' To interpolate coordinate of a point which is on the line from  P0 to P1
         fraction is counted from P0
     '''
 
-    ''' 
+    '''
     XX=abs(x0-x1), YY=abs(y0-y1), X= int(fraction * XX), Y= int(fraction * YY)
     '''
     X = int(fraction * abs(P0[0]-P1[0]))
     Y = int(fraction * abs(P0[1]-P1[1]))
-    
+
     if P0[0] >= P1[0]:
         x = MAX_AB(P1[0], P0[0] - X)
     else:
@@ -68,14 +68,14 @@ class roiRect():
                 self.H = argVal
             else:
                 pass
-                
+
 
     def set_center(self, x, y):
         ''' Set coordinate (x, y) of the ROI center'''
         self.Xc = x
         self.Yc = y
         self.is_dirty = True
-        
+
 
     def set_size(self, w, h):
         ''' Set size (w, h) of the ROI'''
@@ -110,9 +110,9 @@ class roiRect():
 
 
     def update(self):
-        ''' To re-calculate the ROI Vertex0 and Vertex1 
+        ''' To re-calculate the ROI Vertex0 and Vertex1
 
-            Return: (Vertex0, Vertex1) 
+            Return: (Vertex0, Vertex1)
                 where Vertex0, Vertex1 is coordinates of top-left, and bottom-right
         '''
         halfW = int(self.W/2)
@@ -155,12 +155,91 @@ class ImageROI():
         self.winName = winName
         self.matImg = matImg
 
+    def new_rect(self, name):
+        '''
+        Create a roi object and return to caller.
+            name: the string of the cv2 namedWindow
+
+        return: roiRect
+        '''
+        if name in self.ROIs:
+            return self.ROIs[name]
+        else:
+            new_rect = roiRect(self.winName, self.matImg)
+            return new_rect
+
     def add(self, name, roi):
-        self.ROIs.set(name, roi)
-        pass
+        self.ROIs.setdefault(name, roi)
+
+    def get(self, name):
+        if self.ROIs.has_key(name):
+            return self.ROIs.get(name)
+        else:
+            return None
+    def delete(self, name):
+        self.ROIs.pop(name)
+
+    def set_center(self, name, Xc, Yc):
+        ''' Set coordinate (x, y) of the ROI center'''
+        if name in self.ROIs:
+            roi_rect = self.ROIs[name]
+            roi_rect.set_center(Xc, Yc)
+
+    def set_size(self, name, w, h):
+        ''' Set size (w, h) of the ROI'''
+        if name in self.ROIs:
+            roi_rect = self.ROIs[name]
+            roi_rect.set_size(w, h)
+
+    def set_property(self, name, **kwargs):
+        ''' Set properities :
+                enabled:    True/False -- show or no show
+                lwidth:     width of rectangle line
+                lcolor:     the color to draw rectangle (R, G, B)
+        '''
+        if name in self.ROIs:
+            roi_rect = self.ROIs[name]
+            for argkey, argval in kwargs.items():
+                if argkey == 'enabled':
+                    roi_rect.set_property['enabled'] = argval   # True or False
+                elif argkey == 'lwidth':
+                    roi_rect.set_property['lwidth'] = argval   # line width
+                elif argkey == 'lcolor':
+                    roi_rect.set_property['lcolor'] = argval   # line color
+                else:
+                    pass
+
+    def get_property(self, name, protKey):
+        '''To query property with following key:
+                'enabled', 'lwidth', 'lcolor'
+        '''
+        if name in self.ROIs:
+            roi_rect = self.ROIs[name]
+            return roi_rect.get_property[protKey]
+        else:
+            return None
+
+    def update(self):
+        ''' To re-calculate the ROI Vertex0 and Vertex1
+
+            Return: (Vertex0, Vertex1)
+                where Vertex0, Vertex1 is coordinates of top-left, and bottom-right
+        '''
+        for k in self.ROIs:
+            self.ROIs[k].update()
+
+    def draw(self):
+        ''' To draw the ROI rectangle onto the image'''
+        for k in self.ROIs:
+            self.ROIs[k].draw()
+
+    def show(self):
+        ''' To display the image with ROIs imprinted '''
+        for k in self.ROIs:
+            self.ROIs[k].show()
 
 ###########################################################
-# MainEntry 
+# MainEntry
 ###########################################################
 
 
@@ -182,17 +261,29 @@ def main():
 
     roiW = int(imgW/10)
     roiH = int(imgH/10)
+
+    mat2draw = matImg.copy()
+    shadingRects = ImageROI(winName, mat2draw)
+
     #--------------------------
     # -- Center ROI
     #--------------------------
-    #roiC=roiRect(winName, matImg.copy(), X=10, Y=20, W=100, H=50)
-    mat2draw = matImg.copy()
-    roiC=roiRect(winName, mat2draw)
-    roiC.set_center(imgCenterX, imgCenterY)
-    roiC.set_size(roiW, roiH)
-    roiC.set_property(lcolor=(0, 0, 255))
-    # roiC.set_property(enabled=False)
-    roiC.show()
+    rect = shadingRects.new_rect('C0')
+    rect.set_center(imgCenterX, imgCenterY)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('C0', rect)
+    #shadingRects.update()
+    #shadingRects.show()
+    #print(shadingRects)
+
+    # #roiC=roiRect(winName, matImg.copy(), X=10, Y=20, W=100, H=50)
+    # mat2draw = matImg.copy()
+    # roiC=roiRect(winName, mat2draw)
+    # roiC.set_center(imgCenterX, imgCenterY)
+    # roiC.set_size(roiW, roiH)
+    # roiC.set_property(lcolor=(0, 0, 255))
+    # # roiC.set_property(enabled=False)
+    # roiC.show()
 
     #--------------------------
     # -- Diagonal: Qudrant Q1, Q2, Q3, Q4
@@ -204,32 +295,40 @@ def main():
     Pv = (imgW, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q1: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ1 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiQ1.show()
+    rect = shadingRects.new_rect('Q1')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Q1', rect)
 
     # -- Q2
     Po = (imgCenterX, imgCenterY)
     Pv = (0, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q2: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ2 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiQ2.show()
+    rect = shadingRects.new_rect('Q2')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Q2', rect)
 
     # -- Q3
     Po = (imgCenterX, imgCenterY)
     Pv = (0, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q3: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ3 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiQ3.show()
+    rect = shadingRects.new_rect('Q3')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Q3', rect)
 
     # -- Q4
     Po = (imgCenterX, imgCenterY)
     Pv = (imgW, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q4: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiQ4 = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiQ4.show()
+    rect = shadingRects.new_rect('Q4')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Q4', rect)
 
 
     fraction = 0.85
@@ -240,17 +339,19 @@ def main():
     Pv = (imgW, int(imgH/2))
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hr: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiHr = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiHr.set_property(lcolor=(255,0, 255))
-    roiHr.show()
+    rect = shadingRects.new_rect('Hr')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Hr', rect)
 
     Po = (imgCenterX, imgCenterY)
     Pv = (0, int(imgH/2))
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiHl = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiHl.set_property(lcolor=(255,0, 255))
-    roiHl.show()
+    rect = shadingRects.new_rect('Hl')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Hl', rect)
 
     #--------------------------
     # -- Longitude(Vertical): Vt (top), Vb (bottom)
@@ -259,28 +360,30 @@ def main():
     Pv = (int(imgW/2), 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Vt: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiVt = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiVt.set_property(lcolor=(100, 255, 255))
-    roiVt.show()
+    rect = shadingRects.new_rect('Vt')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Vt', rect)
 
     Po = (imgCenterX, imgCenterY)
     Pv = (int(imgW/2), imgH)
     x, y = interpolateXY(Po, Pv, fraction)
-    print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    roiHl = roiRect(winName, mat2draw, Xc=x, Yc=y, W=roiW, H=roiH)
-    roiHl.set_property(lcolor=(100, 255, 255))
-    roiHl.show()
+    print("Vb: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
+    rect = shadingRects.new_rect('Vb')
+    rect.set_center(x, y)
+    rect.set_size(roiW, roiH)
+    shadingRects.add('Vb', rect)
 
 
+    shadingRects.show()
 
     if False:
         # -- Just for Debug
         cv2.namedWindow('Original')
         cv2.imshow('Original', mat2draw)
-    
 
-
-    cv2.waitKey(0)
+    while not cv2.waitKey(100) == 27:
+        pass
 
 
 
