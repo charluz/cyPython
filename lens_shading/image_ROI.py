@@ -240,9 +240,11 @@ class ImageROI():
 
     def show(self):
         ''' To display the image with ROIs imprinted '''
-        self.matImg = self.matOrigin.copy()
-        for k in self.ROIs:
-            self.ROIs[k].show(self.winName, self.matImg)
+        #self.matImg = self.matOrigin.copy()
+        # for k in self.ROIs:
+        #     self.ROIs[k].show(self.winName, self.matImg)
+        self.draw() #-- have all rectabgle to be drawn on self.matImg
+        cv2.imshow(self.winName, self.matImg)
 
 ###########################################################
 # MainEntry
