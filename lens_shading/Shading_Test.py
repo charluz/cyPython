@@ -183,6 +183,32 @@ def update_shadingRECT():
         update_QHV_rect(rect_name, Po, Vp['Pv'], fraction)
 
 
+def calculate_all_rectangles():
+    """計算所有 shading rect 的 luma/chroma shading"""
+    global gShadingINFO
+    gShadingINFO = {}
+    gShadingINFO.clear()
+    allRect = gShadingRECT.get_vertex_all()
+    #print(allRect)
+    for rect in allRect:
+        nameID = rect[0]
+        VPt = rect[1]
+        VPb = rect[2]
+        subimg = gImgSrc[VPt[1]:VPb[1], VPt[0]:VPb[0]]
+        subGray = cv2.cvtColor(subimg, cv2.COLOR_BGR2GRAY)
+        Bmean = int(np.mean(subimg[:,:,0]))
+        Gmean = int(np.mean(subimg[:,:,1]))
+        Rmean = int(np.mean(subimg[:,:,2]))
+        Ymean = int(np.mean(subGray))
+        Rratio = Rmean/Gmean
+        Bratio = Bmean/Gmean
+        print(nameID, ": shape= ", subGray.shape, " Ymean= ", Ymean, " Gmean= ", Gmean)
+        shadingDict = { "Y":Ymean, "R":Rmean, "G":Gmean, "B":Bmean }
+        gShadingINFO.setdefault(nameID, shadingDict)
+
+    print(gShadingINFO)
+        #cv2.namedWindow(nameID)
+        #cv2.imshow(nameID, subimg)
 
 
 ###########################################################
@@ -204,6 +230,9 @@ def cbfn_Update():
     gImgWC = gImgSrc.copy()
     gShadingRECT.show(gSrcImgName, gImgWC)
     #print("callBack: Update")
+
+    calculate_all_rectangles()
+
     return
 
 

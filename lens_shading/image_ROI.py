@@ -150,8 +150,9 @@ class roiRect():
 class ImageROI():
     """A class to define a list of ROI rectangles of an image.
 
-    The list is implemented as a dictionary.
-    The key of the element is a string to identify the ROI rectangle, and the value of the element is an object of roiRect class.
+    The list is implemented as a dictionary, e.g., { "Q1":roiRect, "C0":roiRect, ... }
+    The key of the element is a string to identify the ROI rectangle,
+    and the value of the element is an object of roiRect class.
 
     ...
     Attributes
@@ -262,11 +263,25 @@ class ImageROI():
         for k in self.ROIs:
             self.ROIs[k].update()
 
-    def draw(self, cv_img):
-        ''' To draw the ROI rectangle onto the image'''
+    def draw(self, nameID, cv_img):
+        ''' To draw the specified ROI rectangle on the image'''
         # self.matImg = self.matOrigin.copy()
+        if nameID in self.ROIs:
+            self.ROIs[nameID].draw(cv_img)
+
+    def draw_all(self, cv_img):
+        """Draw all ROI rectangle on the image
+
+        Arguements
+        -----------
+        cv_img: cv image
+            the target image
+
+        Returns
+        -----------
+        None
+        """
         for k in self.ROIs:
-            #self.ROIs[k].draw(self.matImg)
             self.ROIs[k].draw(cv_img)
 
     def show(self, cv_window, cv_img):
@@ -274,7 +289,7 @@ class ImageROI():
         #self.matImg = self.matOrigin.copy()
         # for k in self.ROIs:
         #     self.ROIs[k].show(self.winName, self.matImg)
-        self.draw(cv_img) #-- have all rectabgle to be drawn on self.matImg
+        self.draw_all(cv_img) #-- have all rectabgle to be drawn on self.matImg
         cv2.imshow(cv_window, cv_img)
 
     def get_vertex_all(self):
@@ -294,7 +309,7 @@ class ImageROI():
             p = [ k ]
             p.append(self.ROIs[k].Vertex0)
             p.append(self.ROIs[k].Vertex1)
-            print(p)
+            #print(p)
             allp.append(p)
         return allp
 
@@ -315,7 +330,7 @@ class ImageROI():
             p = [name]
             p.append(self.ROIs[name].Vertex0)
             p.append(self.ROIs[name].Vertex1)
-            print(p)
+            #print(p)
         return p
 
 
