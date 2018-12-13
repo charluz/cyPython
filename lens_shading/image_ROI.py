@@ -163,14 +163,15 @@ class ImageROI():
 
     Methods
     -----------
-    new_rect(name:str) -> class roiRect
-        create an element of the dictionary to configure a roi rectangle, and return the created element to caller.
-    add(name:str, roiL:class roiRect)
-        add a roiRect to ROIs list
-    get(name:str) -> class roiRect
-        return the roiRect with key is 'name'
+    add(name:str, center:(x,y), size(w,h))
+        create and add a rectangle to ROIs list
+        if the named rectangle exists, update the center and size as specified
     delete(name:str)
         remove a designated roiRect from the list
+    get_vertex(name:str) -> (Vt, Vb)
+        get vertexes (Vt: TopLeft, Vb:BottomRight) of the rectangle
+    get_vertex_all() --> a list of [ [name:str, Vt:(x,y), Vb:(x,y) ], ...[] ]
+        get vertexes of all rectangles
     """
     def __init__(self, imgW, imgH):    # -- winName, matImg):
         '''
@@ -180,27 +181,35 @@ class ImageROI():
         self.imgH = imgH
         #self.matImg = matImg.copy()
 
-    def new_rect(self, name):
-        '''
-        Create a roi object and return to caller.
-            name: the string of the cv2 namedWindow
 
-        return: roiRect
-        '''
-        if name in self.ROIs:
-            return self.ROIs[name]
+    def add(self, name, center, size):
+        """add a new rectangle to ROI list
+
+        Arguments
+        -------------
+        name: str
+            the string ID to identify this rectangle
+        center:(x,y)
+            the center coordinate of the rectangle
+        size:(w,h)
+            the size of the rectangle
+
+        Returns
+        -------------
+        list
+            a list of the format: [name:str, Vt:(x,y), Vb:(x,y))], e.g., ["Q1", (10, 10), (30,30)]
+        """
+        if name not in self.ROIs:
+            rect = roiRect(self.imgW, self.imgH, Xc=center[0], Yc=center[1], W=size[0], H=size[1])
+            self.ROIs.setdefault(name, rect)
         else:
-            new_rect = roiRect(self.imgW, self.imgH)  # --(self.winName, self.matImg)
-            return new_rect
+            rect = self.ROIs[name]
+            rect.set_center(center[0], enter[1])
+            rect.set_size(size[0], size[1])
 
-    def add(self, name, roi):
-        self.ROIs.setdefault(name, roi)
+        rect.update()
+        return [ name, rect.Vertex0, rect.Vertex1 ]
 
-    def get(self, name):
-        if name in self.ROIs:
-            return self.ROIs.get(name)
-        else:
-            return None
     def delete(self, name):
         self.ROIs.pop(name)
 
@@ -268,6 +277,48 @@ class ImageROI():
         self.draw(cv_img) #-- have all rectabgle to be drawn on self.matImg
         cv2.imshow(cv_window, cv_img)
 
+    def get_vertex_all(self):
+        """get vertex of all rectangles
+
+        Arguments
+        -------------
+        None
+
+        Returns
+        -------------
+        list
+            a list of the list [name:str, Vt:(x,y), Vb:(x,y))], e.g., [ ["Q1", (10, 10), (30,30)], [], ..., [] ]
+        """
+        allp = []
+        for k in self.ROIs:
+            p = [ k ]
+            p.append(self.ROIs[k].Vertex0)
+            p.append(self.ROIs[k].Vertex1)
+            print(p)
+            allp.append(p)
+        return allp
+
+    def get_vertex(self, name):
+        """get vertex of the rectangle of the ID name:str
+
+        Arguments
+        -------------
+        name: str
+            the ID (key) to query the vertexes of the rectangle
+
+        Returns
+        -------------
+        list
+            a list of the format: [name:str, Vt:(x,y), Vb:(x,y))], e.g., ["Q1", (10, 10), (30,30)]
+        """
+        if name in self.ROIs:
+            p = [name]
+            p.append(self.ROIs[name].Vertex0)
+            p.append(self.ROIs[name].Vertex1)
+            print(p)
+        return p
+
+
 ###########################################################
 # MainEntry
 ###########################################################
@@ -298,22 +349,7 @@ def main():
     #--------------------------
     # -- Center ROI
     #--------------------------
-    rect = shadingRects.new_rect('C0')
-    rect.set_center(imgCenterX, imgCenterY)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('C0', rect)
-    #shadingRects.update()
-    #shadingRects.show()
-    #print(shadingRects)
-
-    # #roiC=roiRect(winName, matImg.copy(), X=10, Y=20, W=100, H=50)
-    # mat2draw = matImg.copy()
-    # roiC=roiRect(winName, mat2draw)
-    # roiC.set_center(imgCenterX, imgCenterY)
-    # roiC.set_size(roiW, roiH)
-    # roiC.set_property(lcolor=(0, 0, 255))
-    # # roiC.set_property(enabled=False)
-    # roiC.show()
+    shadingRects.add('C0', (imgCenterX, imgCenterY), (roiW, roiH))
 
     #--------------------------
     # -- Diagonal: Qudrant Q1, Q2, Q3, Q4
@@ -325,40 +361,28 @@ def main():
     Pv = (imgW, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q1: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Q1')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Q1', rect)
+    shadingRects.add('Q1', (x, y), (roiW, roiH))
 
     # -- Q2
     Po = (imgCenterX, imgCenterY)
     Pv = (0, 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q2: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Q2')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Q2', rect)
+    shadingRects.add('Q2', (x, y), (roiW, roiH))
 
     # -- Q3
     Po = (imgCenterX, imgCenterY)
     Pv = (0, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q3: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Q3')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Q3', rect)
+    shadingRects.add('Q3', (x, y), (roiW, roiH))
 
     # -- Q4
     Po = (imgCenterX, imgCenterY)
     Pv = (imgW, imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Q4: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Q4')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Q4', rect)
+    shadingRects.add('Q4', (x, y), (roiW, roiH))
 
 
     fraction = 0.85
@@ -369,19 +393,13 @@ def main():
     Pv = (imgW, int(imgH/2))
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hr: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Hr')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Hr', rect)
+    shadingRects.add('Hr', (x, y), (roiW, roiH))
 
     Po = (imgCenterX, imgCenterY)
     Pv = (0, int(imgH/2))
     x, y = interpolateXY(Po, Pv, fraction)
     print("Hl: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Hl')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Hl', rect)
+    shadingRects.add('Hl', (x, y), (roiW, roiH))
 
     #--------------------------
     # -- Longitude(Vertical): Vt (top), Vb (bottom)
@@ -390,22 +408,16 @@ def main():
     Pv = (int(imgW/2), 0)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Vt: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Vt')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Vt', rect)
+    shadingRects.add('Vt', (x, y), (roiW, roiH))
 
     Po = (imgCenterX, imgCenterY)
     Pv = (int(imgW/2), imgH)
     x, y = interpolateXY(Po, Pv, fraction)
     print("Vb: P0= ", Po, " P1= ", Pv, " P= ", (x, y))
-    rect = shadingRects.new_rect('Vb')
-    rect.set_center(x, y)
-    rect.set_size(roiW, roiH)
-    shadingRects.add('Vb', rect)
+    shadingRects.add('Vb', (x, y), (roiW, roiH))
 
 
-    shadingRects.show()
+    shadingRects.show(winName, mat2draw)
 
     if False:
         # -- Just for Debug

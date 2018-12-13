@@ -93,10 +93,7 @@ def calculate_shading_globals():
 def set_QHV_rect(rect_name, Po, Pv, fraction):
     x, y = ROI.interpolateXY(Po, Pv, fraction)
     print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
-    rect = gShadingRECT.new_rect(rect_name)
-    rect.set_center(x, y)
-    rect.set_size(gRoiW, gRoiH)
-    gShadingRECT.add(rect_name, rect)
+    gShadingRECT.add(rect_name, (x, y), (gRoiW, gRoiH))
 
 def create_shadingRECT(): #- (nw, img):
     global gImgH, gImgW, gImgXc, gImgYc
@@ -105,10 +102,7 @@ def create_shadingRECT(): #- (nw, img):
 
     #-- Center: C0
     rect_name='C0'
-    rect = gShadingRECT.new_rect(rect_name)
-    rect.set_center(gImgXc, gImgYc)
-    rect.set_size(gRoiW, gRoiH)
-    gShadingRECT.add(rect_name, rect)
+    gShadingRECT.add(rect_name, (gImgXc, gImgYc), (gRoiW, gRoiH))
 
     #-- Quadrants: Q1, Q2, Q3, Q4
     fraction = scl_fieldDiag.get()
@@ -138,11 +132,11 @@ def create_shadingRECT(): #- (nw, img):
         set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
 
 
-def update_QHV_rect(rect_name, rect, Po, Pv, fraction):
+def update_QHV_rect(rect_name, Po, Pv, fraction):
     x, y = ROI.interpolateXY(Po, Pv, fraction)
     print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
-    rect.set_center(x, y)
-    rect.set_size(gRoiW, gRoiH)
+    gShadingRECT.set_center(rect_name, x, y)
+    gShadingRECT.set_size(rect_name, gRoiW, gRoiH)
 
 
 def update_shadingRECT():
@@ -152,9 +146,11 @@ def update_shadingRECT():
 
     #-- Center: C0
     rect_name='C0'
-    rect = gShadingRECT.get(rect_name)
-    rect.set_center(gImgXc, gImgYc)
-    rect.set_size(gRoiW, gRoiH)
+    # rect = gShadingRECT.get(rect_name)
+    # rect.set_center(gImgXc, gImgYc)
+    # rect.set_size(gRoiW, gRoiH)
+    gShadingRECT.set_center(rect_name, gImgXc, gImgYc)
+    gShadingRECT.set_size(rect_name, gRoiW, gRoiH)
 
     #-- Quadrants: Q1, Q2, Q3, Q4
     fraction = scl_fieldDiag.get()
@@ -166,8 +162,7 @@ def update_shadingRECT():
     Qplist = [ Q1param, Q2param, Q3param, Q4param ]
     for Qp in Qplist:
         rect_name = Qp['name']
-        rect = gShadingRECT.get(rect_name)
-        update_QHV_rect(rect_name, rect, Po, Qp['Pv'], fraction)
+        update_QHV_rect(rect_name, Po, Qp['Pv'], fraction)
 
     #-- Latitude (Horizontal): Hr(right), Hl(left)
     fraction = scl_fieldHV.get()
@@ -176,8 +171,7 @@ def update_shadingRECT():
     Hplist = [ Hrparam, Hlparam ]
     for Hp in Hplist:
         rect_name = Hp['name']
-        rect = gShadingRECT.get(rect_name)
-        update_QHV_rect(rect_name, rect, Po, Hp['Pv'], fraction)
+        update_QHV_rect(rect_name, Po, Hp['Pv'], fraction)
 
     #-- Longitude (Vertical): Vt(top), Vb(bottom)
     fraction = scl_fieldHV.get()
@@ -186,8 +180,7 @@ def update_shadingRECT():
     Vplist = [ Vtparam, Vbparam ]
     for Vp in Vplist:
         rect_name = Vp['name']
-        rect = gShadingRECT.get(rect_name)
-        update_QHV_rect(rect_name, rect, Po, Vp['Pv'], fraction)
+        update_QHV_rect(rect_name, Po, Vp['Pv'], fraction)
 
 
 
