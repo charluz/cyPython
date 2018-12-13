@@ -98,7 +98,7 @@ def set_QHV_rect(rect_name, Po, Pv, fraction):
     rect.set_size(gRoiW, gRoiH)
     gShadingRECT.add(rect_name, rect)
 
-def create_shadingRECT(nw, img):
+def create_shadingRECT(): #- (nw, img):
     global gImgH, gImgW, gImgXc, gImgYc
     global gRoiW, gRoiH
     global gShadingRECT
@@ -208,7 +208,8 @@ def cbfn_Update():
     calculate_shading_globals()
     update_shadingRECT()
 
-    gShadingRECT.show()
+    gImgWC = gImgSrc.copy()
+    gShadingRECT.show(gSrcImgName, gImgWC)
     #print("callBack: Update")
     return
 
@@ -275,13 +276,15 @@ def cbfnButton_SelectIMG():
     # Create shading Rectangles
     #-------------------------------------------
     global gShadingRECT
-    global gImgWC
-    gImgWC = matImg.copy()
-    gShadingRECT  = ROI.ImageROI(gSrcImgName, gImgWC)
-    calculate_shading_globals()
-    create_shadingRECT(gSrcImgName, gImgWC)
+    global gImgWC, gImgSrc
 
-    gShadingRECT.show()
+    gImgSrc = matImg
+    gImgWC = gImgSrc.copy()
+    gShadingRECT  = ROI.ImageROI(gImgWC.shape[1], gImgWC.shape[0])
+    calculate_shading_globals()
+    create_shadingRECT() # (gSrcImgName, gImgWC)
+
+    gShadingRECT.show(gSrcImgName, gImgWC)
     return
 
 

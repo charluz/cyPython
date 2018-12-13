@@ -39,7 +39,9 @@ def interpolateXY(P0, P1, fraction):
 
 class roiRect():
     def __init__(self, imgW, imgH, **kwargs):
-        ''' '''
+        ''' imgW: the image width, for boundary handling,
+        imgH: the imgage height, for boundary handling
+        '''
         self._property = {
             'enabled'       : True,
             'lwidth'        : 2,
@@ -146,17 +148,37 @@ class roiRect():
 
 
 class ImageROI():
-    '''
-    class to organize multiple ROIs of an image.
-        Create instant: ImageROI(winName, matImg) where
-            winName is the name of a CV2 namedWindow
-            matImg is the CV2 matrix of the target image
-    '''
-    def __init__(self, winName, matImg):
+    """A class to define a list of ROI rectangles of an image.
+
+    The list is implemented as a dictionary.
+    The key of the element is a string to identify the ROI rectangle, and the value of the element is an object of roiRect class.
+
+    ...
+    Attributes
+    -----------
+    ROIs: {}
+        a dictionary to manage a list of ROI rectangle.
+    imgW, imgH: int
+        the image size which is for boundary handling
+
+    Methods
+    -----------
+    new_rect(name:str) -> class roiRect
+        create an element of the dictionary to configure a roi rectangle, and return the created element to caller.
+    add(name:str, roiL:class roiRect)
+        add a roiRect to ROIs list
+    get(name:str) -> class roiRect
+        return the roiRect with key is 'name'
+    delete(name:str)
+        remove a designated roiRect from the list
+    """
+    def __init__(self, imgW, imgH):    # -- winName, matImg):
+        '''
+        '''
         self.ROIs = {}  # -- use Dictionary key="roiName", val=roiRect
-        self.winName = winName
-        self.matOrigin = matImg
-        self.matImg = matImg.copy()
+        self.imgW = imgW
+        self.imgH = imgH
+        #self.matImg = matImg.copy()
 
     def new_rect(self, name):
         '''
@@ -168,8 +190,7 @@ class ImageROI():
         if name in self.ROIs:
             return self.ROIs[name]
         else:
-            imgW, imgH = self.matOrigin.shape[1], self.matOrigin.shape[0]
-            new_rect = roiRect(imgW, imgH)  # --(self.winName, self.matImg)
+            new_rect = roiRect(self.imgW, self.imgH)  # --(self.winName, self.matImg)
             return new_rect
 
     def add(self, name, roi):
@@ -232,19 +253,20 @@ class ImageROI():
         for k in self.ROIs:
             self.ROIs[k].update()
 
-    def draw(self):
+    def draw(self, cv_img):
         ''' To draw the ROI rectangle onto the image'''
-        self.matImg = self.matOrigin.copy()
+        # self.matImg = self.matOrigin.copy()
         for k in self.ROIs:
-            self.ROIs[k].draw(self.matImg)
+            #self.ROIs[k].draw(self.matImg)
+            self.ROIs[k].draw(cv_img)
 
-    def show(self):
+    def show(self, cv_window, cv_img):
         ''' To display the image with ROIs imprinted '''
         #self.matImg = self.matOrigin.copy()
         # for k in self.ROIs:
         #     self.ROIs[k].show(self.winName, self.matImg)
-        self.draw() #-- have all rectabgle to be drawn on self.matImg
-        cv2.imshow(self.winName, self.matImg)
+        self.draw(cv_img) #-- have all rectabgle to be drawn on self.matImg
+        cv2.imshow(cv_window, cv_img)
 
 ###########################################################
 # MainEntry
@@ -271,7 +293,7 @@ def main():
     roiH = int(imgH/10)
 
     mat2draw = matImg.copy()
-    shadingRects = ImageROI(winName, mat2draw)
+    shadingRects = ImageROI(mat2draw.shape[1], mat2draw.shape[0])
 
     #--------------------------
     # -- Center ROI
