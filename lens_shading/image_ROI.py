@@ -38,19 +38,21 @@ def interpolateXY(P0, P1, fraction):
 
 
 class roiRect():
-    def __init__(self, winName, matImg, **kwargs):
+    def __init__(self, imgW, imgH, **kwargs):
         ''' '''
         self._property = {
             'enabled'       : True,
-            'lwidth'        : 1,
+            'lwidth'        : 2,
             'lcolor'        : (0, 255, 0),
         }
-        self.gWinName = winName
-        self.gMatImg = matImg
+        # self.gWinName = winName
+        # self.gMatImg = matImg
         self.Xc, self.Yc, self.W, self.H = (1, 1, 2, 2)
         self.Vertex0 = (0, 0)
         self.Vertex1 = (2, 2)
         self.is_dirty = True
+        self.imgW = imgW
+        self.imgH = imgH
         #cv2.imshow(self.gWinName, self.gMatImg)
         for argKey, argVal in kwargs.items():
             #print("ImageROI: argKey= ", argKey, " argVal= ", argVal)
@@ -118,14 +120,14 @@ class roiRect():
         halfW = int(self.W/2)
         halfH = int(self.H/2)
         p0 = (MAX_AB(0, self.Xc-halfW), MAX_AB(0, self.Yc-halfH))
-        p1 = (MIN_AB(self.gMatImg.shape[1], self.Xc+halfW), MIN_AB(self.gMatImg.shape[0], self.Yc+halfH))
+        p1 = (MIN_AB(self.imgW, self.Xc+halfW), MIN_AB(self.imgH, self.Yc+halfH))
         self.Vertex0 = p0
         self.Vertex1 = p1
         self.is_dirty = False
         return (p0, p1)
 
 
-    def draw(self):
+    def draw(self, cv_img):
         ''' To draw the ROI rectangle onto the image'''
         if self.is_dirty:
             self.update()
@@ -133,14 +135,14 @@ class roiRect():
         if self._property['enabled'] == True:
             color = self._property['lcolor']
             lwidth = self._property['lwidth']
-            cv2.rectangle(self.gMatImg, self.Vertex0, self.Vertex1, color, lwidth)
+            cv2.rectangle(cv_img, self.Vertex0, self.Vertex1, color, lwidth)
             ## cv2.imshow(self.gWinName, self.gMatImg)
 
 
-    def show(self):
+    def show(self, cv_window, cv_img):
         ''' To display the image with ROIs imprinted '''
-        self.draw()
-        cv2.imshow(self.gWinName, self.gMatImg)
+        self.draw(cv_img)
+        cv2.imshow(cv_window, cv_img)    #-- (self.gWinName, self.gMatImg)
 
 
 class ImageROI():
@@ -153,7 +155,8 @@ class ImageROI():
     def __init__(self, winName, matImg):
         self.ROIs = {}  # -- use Dictionary key="roiName", val=roiRect
         self.winName = winName
-        self.matImg = matImg
+        self.matOrigin = matImg
+        self.matImg = matImg.copy()
 
     def new_rect(self, name):
         '''
@@ -165,14 +168,15 @@ class ImageROI():
         if name in self.ROIs:
             return self.ROIs[name]
         else:
-            new_rect = roiRect(self.winName, self.matImg)
+            imgW, imgH = self.matOrigin.shape[1], self.matOrigin.shape[0]
+            new_rect = roiRect(imgW, imgH)  # --(self.winName, self.matImg)
             return new_rect
 
     def add(self, name, roi):
         self.ROIs.setdefault(name, roi)
 
     def get(self, name):
-        if self.ROIs.has_key(name):
+        if name in self.ROIs:
             return self.ROIs.get(name)
         else:
             return None
@@ -230,13 +234,15 @@ class ImageROI():
 
     def draw(self):
         ''' To draw the ROI rectangle onto the image'''
+        self.matImg = self.matOrigin.copy()
         for k in self.ROIs:
-            self.ROIs[k].draw()
+            self.ROIs[k].draw(self.matImg)
 
     def show(self):
         ''' To display the image with ROIs imprinted '''
+        self.matImg = self.matOrigin.copy()
         for k in self.ROIs:
-            self.ROIs[k].show()
+            self.ROIs[k].show(self.winName, self.matImg)
 
 ###########################################################
 # MainEntry

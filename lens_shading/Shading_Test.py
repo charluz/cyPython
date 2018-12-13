@@ -75,12 +75,12 @@ def cbfnButtonReset():
 ###########################################################
 # Function: Create shadingRect list
 ###########################################################
-def calculate_shading_globals(matWC):
+def calculate_shading_globals():
     global gImgH, gImgW, gImgXc, gImgYc
     global gRoiW, gRoiH
 
-    gImgH = matWC.shape[0]
-    gImgW = matWC.shape[1]
+    gImgH = gImgWC.shape[0]
+    gImgW = gImgWC.shape[1]
     gImgXc = int(gImgW / 2)
     gImgYc = int(gImgH / 2)
     print('image WxH = ', gImgW, '*', gImgH, " (Xc, Yc)= ", (gImgXc, gImgYc))
@@ -138,6 +138,59 @@ def create_shadingRECT(nw, img):
         set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
 
 
+def update_QHV_rect(rect_name, rect, Po, Pv, fraction):
+    x, y = ROI.interpolateXY(Po, Pv, fraction)
+    print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
+    rect.set_center(x, y)
+    rect.set_size(gRoiW, gRoiH)
+
+
+def update_shadingRECT():
+    global gImgH, gImgW, gImgXc, gImgYc
+    global gRoiW, gRoiH
+    global gShadingRECT
+
+    #-- Center: C0
+    rect_name='C0'
+    rect = gShadingRECT.get(rect_name)
+    rect.set_center(gImgXc, gImgYc)
+    rect.set_size(gRoiW, gRoiH)
+
+    #-- Quadrants: Q1, Q2, Q3, Q4
+    fraction = scl_fieldDiag.get()
+    Po = (gImgXc, gImgYc)
+    Q1param = { 'name':'Q1', 'Pv':(gImgW, 0) }
+    Q2param = { 'name':'Q2', 'Pv':(0, 0) }
+    Q3param = { 'name':'Q3', 'Pv':(0, gImgH) }
+    Q4param = { 'name':'Q4', 'Pv':(gImgW, gImgH) }
+    Qplist = [ Q1param, Q2param, Q3param, Q4param ]
+    for Qp in Qplist:
+        rect_name = Qp['name']
+        rect = gShadingRECT.get(rect_name)
+        update_QHV_rect(rect_name, rect, Po, Qp['Pv'], fraction)
+
+    #-- Latitude (Horizontal): Hr(right), Hl(left)
+    fraction = scl_fieldHV.get()
+    Hrparam = { 'name':'Hr', 'Pv':(gImgW, int(gImgH/2)) }
+    Hlparam = { 'name':'Hl', 'Pv':(0, int(gImgH/2)) }
+    Hplist = [ Hrparam, Hlparam ]
+    for Hp in Hplist:
+        rect_name = Hp['name']
+        rect = gShadingRECT.get(rect_name)
+        update_QHV_rect(rect_name, rect, Po, Hp['Pv'], fraction)
+
+    #-- Longitude (Vertical): Vt(top), Vb(bottom)
+    fraction = scl_fieldHV.get()
+    Vtparam = { 'name':'Vt', 'Pv':(int(gImgW/2), 0) }
+    Vbparam = { 'name':'Vb', 'Pv':(int(gImgW/2), gImgH) }
+    Vplist = [ Vtparam, Vbparam ]
+    for Vp in Vplist:
+        rect_name = Vp['name']
+        rect = gShadingRECT.get(rect_name)
+        update_QHV_rect(rect_name, rect, Po, Vp['Pv'], fraction)
+
+
+
 
 ###########################################################
 # Function : cbfn_Update()
@@ -152,6 +205,10 @@ def cbfn_Update():
     else:
         scl_fieldHV.config(state= DISABLED)
 
+    calculate_shading_globals()
+    update_shadingRECT()
+
+    gShadingRECT.show()
     #print("callBack: Update")
     return
 
@@ -190,6 +247,9 @@ def cbfnButton_SelectIMG():
     try:
         matImg = cv2.imread(gOpenFileName, cv2.IMREAD_UNCHANGED)
         cv2.namedWindow(gSrcImgName, cv2.WINDOW_NORMAL)
+        #-- resize window to 720p in image height
+        cv2.resizeWindow(gSrcImgName, int(720*matImg.shape[1]/matImg.shape[0]), 720)
+        print('Output window resized ')
         # cv2.imshow(gSrcImgName, matImg)
     except:
         messageBoxOK('FileIO', 'CV2 failed to load image file :\n' + gOpenFileName)
@@ -215,10 +275,11 @@ def cbfnButton_SelectIMG():
     # Create shading Rectangles
     #-------------------------------------------
     global gShadingRECT
-    matWorkCopy = matImg.copy()
-    gShadingRECT  = ROI.ImageROI(gSrcImgName, matWorkCopy)
-    calculate_shading_globals(matWorkCopy)
-    create_shadingRECT(gSrcImgName, matWorkCopy)
+    global gImgWC
+    gImgWC = matImg.copy()
+    gShadingRECT  = ROI.ImageROI(gSrcImgName, gImgWC)
+    calculate_shading_globals()
+    create_shadingRECT(gSrcImgName, gImgWC)
 
     gShadingRECT.show()
     return
@@ -329,7 +390,7 @@ def main():
     chkbtn_Vert.pack(side=TOP, expand=True, fill=X)
 
 
-    cbfn_Update()
+    #cbfn_Update()
 
     winRoot.mainloop()
 
