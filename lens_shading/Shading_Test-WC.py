@@ -78,13 +78,12 @@ def cbfnButtonReset():
 def calculate_shading_globals():
     global gImgH, gImgW, gImgXc, gImgYc
     global gRoiW, gRoiH
-    global gImgWC
 
     gImgH = gImgWC.shape[0]
     gImgW = gImgWC.shape[1]
     gImgXc = int(gImgW / 2)
     gImgYc = int(gImgH / 2)
-    print('image WxH = ', gImgW, '*', gImgH, " (Xc, Yc)= ", (gImgXc, gImgYc))
+    #print('image WxH = ', gImgW, '*', gImgH, " (Xc, Yc)= ", (gImgXc, gImgYc))
 
     wsize_ratio = scl_windowSize.get() / 100
     gRoiW = int(gImgW * wsize_ratio)
@@ -93,7 +92,7 @@ def calculate_shading_globals():
 
 def set_QHV_rect(rect_name, Po, Pv, fraction):
     x, y = ROI.interpolateXY(Po, Pv, fraction)
-    print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
+    #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
     gShadingRECT.add(rect_name, (x, y), (gRoiW, gRoiH))
 
 def create_shadingRECT(): #- (nw, img):
@@ -135,7 +134,7 @@ def create_shadingRECT(): #- (nw, img):
 
 def update_QHV_rect(rect_name, Po, Pv, fraction):
     x, y = ROI.interpolateXY(Po, Pv, fraction)
-    print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
+    #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
     gShadingRECT.set_center(rect_name, x, y)
     gShadingRECT.set_size(rect_name, gRoiW, gRoiH)
 
@@ -203,11 +202,15 @@ def calculate_all_rectangles():
         Ymean = int(np.mean(subGray))
         Rratio = Rmean/Gmean
         Bratio = Bmean/Gmean
-        print(nameID, ": shape= ", subGray.shape, " Ymean= ", Ymean, " Gmean= ", Gmean)
+        #print(nameID, ": shape= ", subGray.shape, " Ymean= ", Ymean, " Gmean= ", Gmean)
+        text = nameID + ": Y= " + str(Ymean) + " (R,G,B)= " + str(Rmean) + ", " + str(Gmean) + ", " + str(Bmean)
+        print(text, ' @ ', (VPt[0], VPb[1]+10))
+        #cv2.putText(gImgWC, text, (VPt[0], VPb[1]+10), cv2.FONT_HERSHEY_SIMPLEX, 8, (200, 200, 200), 1, cv2.LINE_AA)
+        cv2.putText(gImgWC, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 8, (200, 200, 200), 1, cv2.LINE_AA)
         shadingDict = { "Y":Ymean, "R":Rmean, "G":Gmean, "B":Bmean }
         gShadingINFO.setdefault(nameID, shadingDict)
-
-    print(gShadingINFO)
+        cv2.imshow(gSrcImgName, gImgWC)
+    #print(gShadingINFO)
         #cv2.namedWindow(nameID)
         #cv2.imshow(nameID, subimg)
 
@@ -233,6 +236,7 @@ def cbfn_Update():
     #print("callBack: Update")
 
     calculate_all_rectangles()
+    gShadingRECT.show(gSrcImgName, gImgWC)
 
     return
 
