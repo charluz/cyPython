@@ -222,6 +222,10 @@ def cbfn_Update():
     global scl_windowSize, scl_fieldDiag, scl_fieldHV
     global var_chkLuma, var_chkChroma
     global var_chkHori, var_chkVert
+    global gIsImgOpened
+
+    if not gIsImgOpened:
+        return
 
     if 1==var_chkHori.get() or 1==var_chkVert.get():
         scl_fieldHV.config(state= NORMAL)
@@ -248,6 +252,8 @@ def cbfnButton_SelectIMG():
     global gOpenFileName, gSrcImgName, gSrcImgDir, gSrcImgBase, gSrcImgExt
     global gImgH, gImgW, gImgXc, gImgYc
     global gRoiW, gRoiH
+    global gShadingRECT
+    global gImgWC, gImgSrc
 
     gOpenFileName = filedialog.askopenfilename()
 
@@ -273,16 +279,21 @@ def cbfnButton_SelectIMG():
     # matImg = cv2.imread(gSrcImgName)
     # print(matImg.shape)
     try:
-        matImg = cv2.imread(gOpenFileName, cv2.IMREAD_UNCHANGED)
+        gImgSrc = cv2.imread(gOpenFileName, cv2.IMREAD_UNCHANGED)
+        print('Image Size: ', gImgSrc.shape[1], '*', gImgSrc.shape[0])
         cv2.namedWindow(gSrcImgName, cv2.WINDOW_NORMAL)
         #-- resize window to 720p in image height
-        cv2.resizeWindow(gSrcImgName, int(720*matImg.shape[1]/matImg.shape[0]), 720)
-        print('Output window resized ')
-        # cv2.imshow(gSrcImgName, matImg)
     except:
         messageBoxOK('FileIO', 'CV2 failed to load image file :\n' + gOpenFileName)
         cbfnButtonReset()
         return
+
+    if gImgSrc.shape[1] > 720:
+        w = int(720*gImgSrc.shape[1]/gImgSrc.shape[0])
+        h = 720
+        cv2.resizeWindow(gSrcImgName, w, h)
+        print('Output window resized to: ', w, '*', h)
+        # cv2.imshow(gSrcImgName, gImgSrc)
 
     # -- Now, create a thread to watch the status of the window
     def PROC_check_window_status(namedWin, slp_time):
@@ -302,11 +313,13 @@ def cbfnButton_SelectIMG():
     #-------------------------------------------
     # Create shading Rectangles
     #-------------------------------------------
-    global gShadingRECT
-    global gImgWC, gImgSrc
 
-    gImgSrc = matImg
     gImgWC = gImgSrc.copy()
+    cv2.imshow(gSrcImgName, gImgWC)
+
+    global gIsImgOpened
+    gIsImgOpened = True
+
     gShadingRECT  = ROI.ImageROI(gImgWC.shape[1], gImgWC.shape[0])
     calculate_shading_globals()
     create_shadingRECT() # (gSrcImgName, gImgWC)
