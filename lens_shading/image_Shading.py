@@ -4,8 +4,6 @@ import os, sys
 import _thread
 import time
 
-# from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
-# from tkinter import filedialog
 import numpy as np
 import cv2
 
@@ -32,6 +30,9 @@ gIsImgOpened=False
 class ImageShading():
     """A class to define the Luma/Chroma shading operation of an given image.
 
+    Methods
+    ---------------
+    set_property()
     """
     shadingID = ['Co', 'Q1', 'Q2', 'Q3', 'Q4', 'Hr', 'Hl', 'Vt', 'Vb' ]
 
@@ -56,6 +57,8 @@ class ImageShading():
         #-- store global variables
         self.gImgW = imgW
         self.gImgH = imgH
+        self.gShadingINFO = {}
+
         #-- derive image center coordinate
         self.gImgXc = int(gImgW / 2)
         self.gImgYc = int(gImgH / 2)
@@ -68,7 +71,7 @@ class ImageShading():
 
         self._create_shading_rectangles()
 
-        gShadingRECT.show(gSrcImgName, gImgWC)
+        self.gShadingRECT.show(gSrcImgName, gImgWC)
 
 
     def set_property(self, **kwargs):
@@ -95,215 +98,183 @@ class ImageShading():
         """
         for argkey, argval in kwargs.items():
             if argkey == 'c_size_ratio':
-                self._property[argkey] = argval   # True or False
+                self._property[argkey] = argval   # size proportional value of center rectangle to source image
             elif argkey == 'e_size_ratio':
-                self._property[argkey] = argval   # line width
+                self._property[argkey] = argval   # size proportional value of corner rectangles to source image
             elif argkey == 'd_field':
-                self._property[argkey] = argval   # line color
+                self._property[argkey] = argval   # the image field ratio of the diagonal rectangles to the center's
             elif argkey == 'hv_field':
-                self._property[argkey] = argval   # line color
+                self._property[argkey] = argval   # the image field ratio of the H/V rectangles to the center's
             else:
                 pass
 
 
-    def set_QHV_rect(rect_name, Po, Pv, fraction):
+    def _set_QHV_rect(self, rect_name, Po, Pv, fraction):
         """
         """
         x, y = ROI.interpolateXY(Po, Pv, fraction)
         #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
-        gShadingRECT.add(rect_name, (x, y), (gRoiW, gRoiH))
+        self.gShadingRECT.add(rect_name, (x, y), (self.gERoiW, self.gERoiH))
 
-    def _create_shading_rectangles():
+
+    def _create_shading_rectangles(self):
         """To initialize all shadning rectangles
         """
-
-        #-- Center: C0
-        rect_name='C0'
+        #-- Center: Co
+        rect_name='Co'
         gShadingRECT.add(rect_name, (self.gImgXc, self.gImgYc), (self.gCRoiW, self.gCRoiH))
+
+        Po = (self.gImgXc, self.gImgYc)
+
         #-- Quadrants: Q1, Q2, Q3, Q4
-        fraction = scl_fieldDiag.get()
-        Po = (gImgXc, gImgYc)
-        Q1param = { 'name':'Q1', 'Pv':(gImgW, 0) }
+        fraction = self._property['e_field']
+        Q1param = { 'name':'Q1', 'Pv':(self.gImgW, 0) }
         Q2param = { 'name':'Q2', 'Pv':(0, 0) }
-        Q3param = { 'name':'Q3', 'Pv':(0, gImgH) }
-        Q4param = { 'name':'Q4', 'Pv':(gImgW, gImgH) }
+        Q3param = { 'name':'Q3', 'Pv':(0, self.gImgH) }
+        Q4param = { 'name':'Q4', 'Pv':(self.gImgW, self.gImgH) }
         Qplist = [ Q1param, Q2param, Q3param, Q4param ]
         for Qp in Qplist:
-            set_QHV_rect(Qp['name'], Po, Qp['Pv'], fraction)
+            self._set_QHV_rect(Qp['name'], Po, Qp['Pv'], fraction)
 
         #-- Latitude (Horizontal): Hr(right), Hl(left)
-        fraction = scl_fieldHV.get()
-        Hrparam = { 'name':'Hr', 'Pv':(gImgW, int(gImgH/2)) }
-        Hlparam = { 'name':'Hl', 'Pv':(0, int(gImgH/2)) }
+        fraction = self._property['hv_field']
+        Hrparam = { 'name':'Hr', 'Pv':(self.gImgW, int(self.gImgH/2)) }
+        Hlparam = { 'name':'Hl', 'Pv':(0, int(self.gImgH/2)) }
         Hplist = [ Hrparam, Hlparam ]
         for Hp in Hplist:
-            set_QHV_rect(Hp['name'], Po, Hp['Pv'], fraction)
+            self._set_QHV_rect(Hp['name'], Po, Hp['Pv'], fraction)
 
         #-- Longitude (Vertical): Vt(top), Vb(bottom)
-        fraction = scl_fieldHV.get()
-        Vtparam = { 'name':'Vt', 'Pv':(int(gImgW/2), 0) }
-        Vbparam = { 'name':'Vb', 'Pv':(int(gImgW/2), gImgH) }
+        Vtparam = { 'name':'Vt', 'Pv':(int(self.gImgW/2), 0) }
+        Vbparam = { 'name':'Vb', 'Pv':(int(self.gImgW/2), self.gImgH) }
         Vplist = [ Vtparam, Vbparam ]
         for Vp in Vplist:
-            set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
+            self._set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
+
+
+    def _update_QHV_rect(self, rect_name, Po, Pv, fraction):
+        """
+        """
+        x, y = ROI.interpolateXY(Po, Pv, fraction)
+        #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
+        gShadingRECT.set_center(rect_name, x, y)
+        gShadingRECT.set_size(rect_name, self.gERoiW, self.gERoiH)
+
+
+    def _update_all_rectangles(self):
+        """To update vertexes of all shading rectangles
+        """
+        rect_name='Co'
+        #self.gShadingRECT.set_center(rect_name, self.gImgXc, self.gImgYc)
+        self.gCRoiW = int(gImgW * self._property['c_size_ratio'])
+        self.gCRoiH = int(gImgH * self._property['c_size_ratio'])
+        self.gShadingRECT.set_size(rect_name, self.gCRoiW, self.gCRoiH)
+
+        Po = (self.gImgXc, self.gImgYc)
+
+        self.gERoiW = int(gImgW * self._property['e_size_ratio'])
+        self.gERoiH = int(gImgH * self._property['e_size_ratio'])
+
+        #-- Quadrants: Q1, Q2, Q3, Q4
+        fraction = self._property['d_field']
+        Q1param = { 'name':'Q1', 'Pv':(self.gImgW, 0) }
+        Q2param = { 'name':'Q2', 'Pv':(0, 0) }
+        Q3param = { 'name':'Q3', 'Pv':(0, self.gImgH) }
+        Q4param = { 'name':'Q4', 'Pv':(self.gImgW, self.gImgH) }
+        Qplist = [ Q1param, Q2param, Q3param, Q4param ]
+        for Qp in Qplist:
+            rect_name = Qp['name']
+            self._update_QHV_rect(rect_name, Po, Qp['Pv'], fraction)
+
+        #-- Latitude (Horizontal): Hr(right), Hl(left)
+        fraction = self._property['hv_field']
+        Hrparam = { 'name':'Hr', 'Pv':(self.gImgW, int(self.gImgH/2)) }
+        Hlparam = { 'name':'Hl', 'Pv':(0, int(self.gImgH/2)) }
+        Hplist = [ Hrparam, Hlparam ]
+        for Hp in Hplist:
+            rect_name = Hp['name']
+            self._update_QHV_rect(rect_name, Po, Hp['Pv'], fraction)
+
+        #-- Longitude (Vertical): Vt(top), Vb(bottom)
+        Vtparam = { 'name':'Vt', 'Pv':(int(self.gImgW/2), 0) }
+        Vbparam = { 'name':'Vb', 'Pv':(int(self.gImgW/2), self.gImgH) }
+        Vplist = [ Vtparam, Vbparam ]
+        for Vp in Vplist:
+            rect_name = Vp['name']
+            self._update_QHV_rect(rect_name, Po, Vp['Pv'], fraction)
 
 
 
-###########################################################
-# Function: Create shadingRect list
-###########################################################
-def calculate_shading_globals():
-    global gImgH, gImgW, gImgXc, gImgYc
-    global gRoiW, gRoiH
+    def _calculate_all_shadings(self, cvSrcImg):
+        """To calculate the luma/chroma shading of each shading rectangles.
 
-    gImgH = gImgWC.shape[0]
-    gImgW = gImgWC.shape[1]
-    gImgXc = int(gImgW / 2)
-    gImgYc = int(gImgH / 2)
-    #print('image WxH = ', gImgW, '*', gImgH, " (Xc, Yc)= ", (gImgXc, gImgYc))
+        The calculated result is saved in self.gShadingINFO which is a dictionary of the following format:
+            e.g., { 'Co':shadingDict, 'Q1':shadingDict, ... } 
+                where shadingDict specifies the Luma/Chroma and Vertexes of the named shading rectangle
 
-    wsize_ratio = scl_windowSize.get() / 100
-    gRoiW = int(gImgW * wsize_ratio)
-    gRoiH = int(gImgH * wsize_ratio)
+        Arguments
+        --------------
+        cvSrcImg: cv Mat
+            the source image to get sub-image of each shading rectangle
+        """
+        #-- clear the shading info list
+        self.gShadingINFO.clear()
+        
+        #-- get vertexes of all shading rectangles
+        allRect = self.gShadingRECT.get_vertex_all()
+        #print(allRect)
 
+        #-- calculate Y, R/G/B of each sub-image 
+        for rect in allRect:
+            nameID = rect[0]
+            VPt = rect[1]
+            VPb = rect[2]
+            
+            subimg = cvSrcImg[VPt[1]:VPb[1], VPt[0]:VPb[0]]
+            subGray = cv2.cvtColor(subimg, cv2.COLOR_BGR2GRAY)
 
-def set_QHV_rect(rect_name, Po, Pv, fraction):
-    x, y = ROI.interpolateXY(Po, Pv, fraction)
-    #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
-    gShadingRECT.add(rect_name, (x, y), (gRoiW, gRoiH))
+            Bmean = int(np.mean(subimg[:,:,0]))
+            Gmean = int(np.mean(subimg[:,:,1]))
+            Rmean = int(np.mean(subimg[:,:,2]))
+            Ymean = int(np.mean(subGray))
+            
+            Rratio = Rmean/Gmean
+            Bratio = Bmean/Gmean
+            
+            if False:
+                #print(nameID, ": shape= ", subGray.shape, shading rect 的 an= ", Ymean, " Gmean= ", Gmean)
+                Ytext = "Y= "+str(Ymean)
+                RGtext = "R/G= "+ "{:.2f}%".format(Rratio) shading rect 的 
+                BGtext = "B/G= "+ "{:.2f}%".format(Bratio)
+                print(Ytext, ' ', RGtext, ' ', BGtext)
 
-def create_shadingRECT(): #- (nw, img):
-    global gImgH, gImgW, gImgXc, gImgYc
-    global gRoiW, gRoiH
-    global gShadingRECT
-
-    #-- Center: C0
-    rect_name='C0'
-    gShadingRECT.add(rect_name, (gImgXc, gImgYc), (gRoiW, gRoiH))
-    #-- Quadrants: Q1, Q2, Q3, Q4
-    fraction = scl_fieldDiag.get()
-    Po = (gImgXc, gImgYc)
-    Q1param = { 'name':'Q1', 'Pv':(gImgW, 0) }
-    Q2param = { 'name':'Q2', 'Pv':(0, 0) }
-    Q3param = { 'name':'Q3', 'Pv':(0, gImgH) }
-    Q4param = { 'name':'Q4', 'Pv':(gImgW, gImgH) }
-    Qplist = [ Q1param, Q2param, Q3param, Q4param ]
-    for Qp in Qplist:
-        set_QHV_rect(Qp['name'], Po, Qp['Pv'], fraction)
-
-    #-- Latitude (Horizontal): Hr(right), Hl(left)
-    fraction = scl_fieldHV.get()
-    Hrparam = { 'name':'Hr', 'Pv':(gImgW, int(gImgH/2)) }
-    Hlparam = { 'name':'Hl', 'Pv':(0, int(gImgH/2)) }
-    Hplist = [ Hrparam, Hlparam ]
-    for Hp in Hplist:
-        set_QHV_rect(Hp['name'], Po, Hp['Pv'], fraction)
-
-    #-- Longitude (Vertical): Vt(top), Vb(bottom)
-    fraction = scl_fieldHV.get()
-    Vtparam = { 'name':'Vt', 'Pv':(int(gImgW/2), 0) }
-    Vbparam = { 'name':'Vb', 'Pv':(int(gImgW/2), gImgH) }
-    Vplist = [ Vtparam, Vbparam ]
-    for Vp in Vplist:
-        set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
-
-def update_QHV_rect(rect_name, Po, Pv, fraction):
-    x, y = ROI.interpolateXY(Po, Pv, fraction)
-    #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
-    gShadingRECT.set_center(rect_name, x, y)
-    gShadingRECT.set_size(rect_name, gRoiW, gRoiH)
+                text = Ytext
+                fface = cv2.FONT_HERSHEY_SIMPLEX
+                fscale=1
+                fthick=2
+                ((tw, th),tpad) = cv2.getTextSize(text=Ytext, fontFace=fface, fontScale=fscale, thickness=fthick)
+                cv2.putText(cv_img, text, (VPt[0], VPb[1]+(th+tpad*2)), fface, fscale, (0, 0, 200), fthick, 255)
+                #text = nameID + ": Y= " + str(Ymean) + " (R,G,B)= " + str(Rmean) + ", " + str(Gmean) + ", " + str(Bmean)
+                #print(text, ' @ ', (VPt[0], VPb[1]+10))
+                #font = cv2.FONT_HERSHEY_SIMPLEX
+                #fontScale=1
+                #fontThinckness=1
+                #cv2.putText(cv_img, text, (VPt[0], VPb[1]+20), font, 1, (0, 0, 200), 2, 255)
+                #cv2.putText(gImgWC, text, (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 200), 2, 255)
+            shadingDict = { "Y":Ymean, "R":Rmean, "G":Gmean, "B":Bmean, "Vt":VPt, "Vb":VPb }
+            self.gShadingINFO.setdefault(nameID, shadingDict)
 
 
-def update_shadingRECT():
-    global gImgH, gImgW, gImgXc, gImgYc
-    global gRoiW, gRoiH
-    global gShadingRECT
+    def update(self, cvSrcImg):
+        """To update vertexes and Y, R/G/B values of all shading rectangles
 
-    #-- Center: C0
-    rect_name='C0'
-    # rect = gShadingRECT.get(rect_name)
-    # rect.set_center(gImgXc, gImgYc)
-    # rect.set_size(gRoiW, gRoiH)
-    gShadingRECT.set_center(rect_name, gImgXc, gImgYc)
-    gShadingRECT.set_size(rect_name, gRoiW, gRoiH)
+        Call this method to update vertexes and sub-image values if the properties are changed.
+        """
+        #-- Update vertexes of each shading rectangles
+        self._update_all_rectangles()
 
-    #-- Quadrants: Q1, Q2, Q3, Q4
-    fraction = scl_fieldDiag.get()
-    Po = (gImgXc, gImgYc)
-    Q1param = { 'name':'Q1', 'Pv':(gImgW, 0) }
-    Q2param = { 'name':'Q2', 'Pv':(0, 0) }
-    Q3param = { 'name':'Q3', 'Pv':(0, gImgH) }
-    Q4param = { 'name':'Q4', 'Pv':(gImgW, gImgH) }
-    Qplist = [ Q1param, Q2param, Q3param, Q4param ]
-    for Qp in Qplist:
-        rect_name = Qp['name']
-        update_QHV_rect(rect_name, Po, Qp['Pv'], fraction)
-
-    #-- Latitude (Horizontal): Hr(right), Hl(left)
-    fraction = scl_fieldHV.get()
-    Hrparam = { 'name':'Hr', 'Pv':(gImgW, int(gImgH/2)) }
-    Hlparam = { 'name':'Hl', 'Pv':(0, int(gImgH/2)) }
-    Hplist = [ Hrparam, Hlparam ]
-    for Hp in Hplist:
-        rect_name = Hp['name']
-        update_QHV_rect(rect_name, Po, Hp['Pv'], fraction)
-
-    #-- Longitude (Vertical): Vt(top), Vb(bottom)
-    fraction = scl_fieldHV.get()
-    Vtparam = { 'name':'Vt', 'Pv':(int(gImgW/2), 0) }
-    Vbparam = { 'name':'Vb', 'Pv':(int(gImgW/2), gImgH) }
-    Vplist = [ Vtparam, Vbparam ]
-    for Vp in Vplist:
-        rect_name = Vp['name']
-        update_QHV_rect(rect_name, Po, Vp['Pv'], fraction)
-
-
-def calculate_all_rectangles(cv_img):
-    """計算所有 shading rect 的 luma/chroma shading"""
-    global gShadingINFO
-
-    gShadingINFO = {}
-    gShadingINFO.clear()
-    allRect = gShadingRECT.get_vertex_all()
-    #print(allRect)
-    for rect in allRect:
-        nameID = rect[0]
-        VPt = rect[1]
-        VPb = rect[2]
-        subimg = gImgSrc[VPt[1]:VPb[1], VPt[0]:VPb[0]]
-        subGray = cv2.cvtColor(subimg, cv2.COLOR_BGR2GRAY)
-        Bmean = int(np.mean(subimg[:,:,0]))
-        Gmean = int(np.mean(subimg[:,:,1]))
-        Rmean = int(np.mean(subimg[:,:,2]))
-        Ymean = int(np.mean(subGray))
-        Rratio = Rmean/Gmean
-        Bratio = Bmean/Gmean
-        if True:
-            #print(nameID, ": shape= ", subGray.shape, " Ymean= ", Ymean, " Gmean= ", Gmean)
-            Ytext = "Y= "+str(Ymean)
-            RGtext = "R/G= "+ "{:.2f}%".format(Rratio)
-            BGtext = "B/G= "+ "{:.2f}%".format(Bratio)
-            print(Ytext, ' ', RGtext, ' ', BGtext)
-
-            text = Ytext
-            fface = cv2.FONT_HERSHEY_SIMPLEX
-            fscale=1
-            fthick=2
-            ((tw, th),tpad) = cv2.getTextSize(text=Ytext, fontFace=fface, fontScale=fscale, thickness=fthick)
-            cv2.putText(cv_img, text, (VPt[0], VPb[1]+(th+tpad*2)), fface, fscale, (0, 0, 200), fthick, 255)
-            #text = nameID + ": Y= " + str(Ymean) + " (R,G,B)= " + str(Rmean) + ", " + str(Gmean) + ", " + str(Bmean)
-            #print(text, ' @ ', (VPt[0], VPb[1]+10))
-            #font = cv2.FONT_HERSHEY_SIMPLEX
-            #fontScale=1
-            #fontThinckness=1
-            #cv2.putText(cv_img, text, (VPt[0], VPb[1]+20), font, 1, (0, 0, 200), 2, 255)
-            #cv2.putText(gImgWC, text, (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 200), 2, 255)
-        shadingDict = { "Y":Ymean, "R":Rmean, "G":Gmean, "B":Bmean, "Vt":VPt, "Vb":VPb }
-        gShadingINFO.setdefault(nameID, shadingDict)
-
-    # xmat = gImgWC.copy()
-    # cv2.namedWindow('xmat', cv2.WINDOW_NORMAL)
-    # cv2.imshow(gSrcImgName, gImgWC)
+        #-- Recalculate Y, R/G/B values of each shading rectangles
+        self._calculate_all_shadings(cvSrcImg)
 
 
 ###########################################################
@@ -326,17 +297,7 @@ def cbfn_Update():
     gImgWC = gImgSrc.copy()
     print('gImgWC renew (2)')
 
-
-    calculate_shading_globals()
-    update_shadingRECT()
-
-    #gShadingRECT.show(gSrcImgName, gImgWC)
-    #print('window name = ', gSrcImgName)
-    #print("callBack: Update")
-
-    calculate_all_rectangles(gImgWC)
-    gShadingRECT.show(gSrcImgName, gImgWC)
-    #cv2.putText(gImgWC, "Fuck", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 200), 1, 255)
+    gImageShading.update()
     cv2.imshow(gSrcImgName, gImgWC)
 
     return
@@ -418,11 +379,8 @@ def cbfnButton_SelectIMG():
     global gIsImgOpened
     gIsImgOpened = True
 
-    gShadingRECT  = ROI.ImageROI(gImgWC.shape[1], gImgWC.shape[0])
-    calculate_shading_globals()
-    create_shadingRECT() # (gSrcImgName, gImgWC)
-
-    gShadingRECT.show(gSrcImgName, gImgWC)
+    gImageShading = ImageShading(gImgWC.shape[1], gImgWC.shape[0])
+    gImageShading.update(gImgWC)
     return
 
 
@@ -441,6 +399,9 @@ def cbfnButtonMainExit():
 ###########################################################
 # MainEntry
 ###########################################################
+
+from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
+from tkinter import filedialog
 
 def main():
     global winTitle, winRoot
