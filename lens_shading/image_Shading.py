@@ -4,8 +4,8 @@ import os, sys
 import _thread
 import time
 
-from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
-from tkinter import filedialog
+# from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
+# from tkinter import filedialog
 import numpy as np
 import cv2
 
@@ -15,12 +15,7 @@ import cv2
 
 import image_ROI as ROI
 
-'''
-from tkFileDialog import askopenfilename
 
-That code would have worked fine in Python 2.x, but it is no longer valid.
-In Python 3.x, tkFileDialog was renamed to filedialog.
-'''
 
 gOpenFileName=''
 gSrcImgName=''
@@ -31,46 +26,127 @@ gIsImgOpened=False
 
 
 
-###########################################################
-# Message Box with OK button
-###########################################################
-def messageBoxOK(title, msg):
-    box = Toplevel()
-    box.title(title)
-    Label(box, text=msg).pack()
-    Button(box, text='OK', command=box.destroy).pack()
+#--------------------------------------
+# Class: roiRect
+#--------------------------------------
+class ImageShading():
+    """A class to define the Luma/Chroma shading operation of an given image.
 
-###########################################################
-# Function: Parse file's path/basename/extname
-###########################################################
-def parse_file_path(fpath):
+    """
+    shadingID = ['Co', 'Q1', 'Q2', 'Q3', 'Q4', 'Hr', 'Hl', 'Vt', 'Vb' ]
 
-    print('Input filename: ', fpath)
+    def __init__(self, imgW, imgH):
+        """Initialize all shading rectangles
 
-    # Create root repository folder for output images
-    fdir = os.path.dirname(fpath)
-    ffile = os.path.basename(fpath)
-    fbase, fext = os.path.splitext(ffile)
-    # try:
-    #     fdir = os.path.dirname(fpath)
-    #     ffile = os.path.basename(fpath)
-    #     fbase, fext = os.path.splitext(ffile)
-    # except:
-    #     print("Error: failed to parse file path, name.")
-    #     return '', '', ''
+        Arguments
+        ------------
+        imgW, imgH: integer
+            the size of the source image
 
-    print('Directory: ', fdir)
-    print("fbase= ", fbase, 'fext= ', fext)
+        Returns
+        --------------
+        None
+        """
+        self._property = {
+            'c_size_ratio'      : 0.1,
+            'e_size_ratio'      : 0.1,
+            'd_field'           : 1.0,
+            'hv_field'          : 1.0,
+        }
+        #-- store global variables
+        self.gImgW = imgW
+        self.gImgH = imgH
+        #-- derive image center coordinate
+        self.gImgXc = int(gImgW / 2)
+        self.gImgYc = int(gImgH / 2)
+        self.gCRoiW = int(gImgW * self._property['c_size_ratio'])
+        self.gCRoiH = int(gImgH * self._property['c_size_ratio'])
+        self.gERoiW = int(gImgW * self._property['e_size_ratio'])
+        self.gERoiH = int(gImgH * self._property['e_size_ratio'])
+        #-- create the ROI list
+        self.gShadingRECT  = ROI.ImageROI(imgW, imgH)
 
-    return fdir, fbase, fext
+        self._create_shading_rectangles()
+
+        gShadingRECT.show(gSrcImgName, gImgWC)
 
 
-###########################################################
-# Function : Callback of Button RESET
-###########################################################
-def cbfnButtonReset():
-    cv2.destroyAllWindows()
-    btnSelectIMG.config(text='Select Image', command=cbfnButton_SelectIMG, bg='LightGreen')
+    def set_property(self, **kwargs):
+        """Set properities of the image shading.
+
+        The property is specified with the format: propt_name=value
+        For example, c_size=0.1
+
+        Arguments
+        --------------
+        c_size_ratio: float
+            * the value is specified as the proportional value of the center rectangle to the image
+            * value = (width/height of the center rectangle) / (width/height of the image)
+            * ranges from 0.05 to 0.3 (5% to 30%)
+        e_size_ratio: float
+            * the proportional value of the edge (diagonal, top/bottom, left/right) rectangle to the image
+            * reanges from 0.05 to 0.2 (5% to 20%)
+        d_field: float
+            * the image field of the diagonal rectangles
+            * ranges from 0.3 to 1.0
+        hv_field: float
+            * the image field of the horizontal/vertical rectangles
+            * ranges from 0.3 to 1.0
+        """
+        for argkey, argval in kwargs.items():
+            if argkey == 'c_size_ratio':
+                self._property[argkey] = argval   # True or False
+            elif argkey == 'e_size_ratio':
+                self._property[argkey] = argval   # line width
+            elif argkey == 'd_field':
+                self._property[argkey] = argval   # line color
+            elif argkey == 'hv_field':
+                self._property[argkey] = argval   # line color
+            else:
+                pass
+
+
+    def set_QHV_rect(rect_name, Po, Pv, fraction):
+        """
+        """
+        x, y = ROI.interpolateXY(Po, Pv, fraction)
+        #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
+        gShadingRECT.add(rect_name, (x, y), (gRoiW, gRoiH))
+
+    def _create_shading_rectangles():
+        """To initialize all shadning rectangles
+        """
+
+        #-- Center: C0
+        rect_name='C0'
+        gShadingRECT.add(rect_name, (self.gImgXc, self.gImgYc), (self.gCRoiW, self.gCRoiH))
+        #-- Quadrants: Q1, Q2, Q3, Q4
+        fraction = scl_fieldDiag.get()
+        Po = (gImgXc, gImgYc)
+        Q1param = { 'name':'Q1', 'Pv':(gImgW, 0) }
+        Q2param = { 'name':'Q2', 'Pv':(0, 0) }
+        Q3param = { 'name':'Q3', 'Pv':(0, gImgH) }
+        Q4param = { 'name':'Q4', 'Pv':(gImgW, gImgH) }
+        Qplist = [ Q1param, Q2param, Q3param, Q4param ]
+        for Qp in Qplist:
+            set_QHV_rect(Qp['name'], Po, Qp['Pv'], fraction)
+
+        #-- Latitude (Horizontal): Hr(right), Hl(left)
+        fraction = scl_fieldHV.get()
+        Hrparam = { 'name':'Hr', 'Pv':(gImgW, int(gImgH/2)) }
+        Hlparam = { 'name':'Hl', 'Pv':(0, int(gImgH/2)) }
+        Hplist = [ Hrparam, Hlparam ]
+        for Hp in Hplist:
+            set_QHV_rect(Hp['name'], Po, Hp['Pv'], fraction)
+
+        #-- Longitude (Vertical): Vt(top), Vb(bottom)
+        fraction = scl_fieldHV.get()
+        Vtparam = { 'name':'Vt', 'Pv':(int(gImgW/2), 0) }
+        Vbparam = { 'name':'Vb', 'Pv':(int(gImgW/2), gImgH) }
+        Vplist = [ Vtparam, Vbparam ]
+        for Vp in Vplist:
+            set_QHV_rect(Vp['name'], Po, Vp['Pv'], fraction)
+
 
 
 ###########################################################
@@ -337,7 +413,6 @@ def cbfnButton_SelectIMG():
     # Create shading Rectangles
     #-------------------------------------------
     gImgWC = gImgSrc.copy()
-    print('gImgWC renew (1)')
     #cv2.imshow(gSrcImgName, gImgWC)
 
     global gIsImgOpened

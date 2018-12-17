@@ -14,13 +14,21 @@ MAX_AB = lambda A, B : A if A > B else B
 MIN_AB = lambda A, B : A if A < B else B
 
 def interpolateXY(P0, P1, fraction):
-    ''' To interpolate coordinate of a point which is on the line from  P0 to P1
-        fraction is counted from P0
-    '''
+    """To interpolate coordinate of a point X which is on the line between P0 to P1
 
-    '''
-    XX=abs(x0-x1), YY=abs(y0-y1), X= int(fraction * XX), Y= int(fraction * YY)
-    '''
+    Arguments
+    ---------------
+    P0, P1:(x,8)
+         the coordinates of two end points, with the format of (x, y)
+    fraction: float
+        the ratio of distance of (X-P0)/(P0-P1)
+        the formula:     XX=abs(x0-x1), YY=abs(y0-y1), X= int(fraction * XX), Y= int(fraction * YY)
+
+    Returns:
+    --------------
+    (x,y)
+        the coordinate of the point X
+    """
     X = int(fraction * abs(P0[0]-P1[0]))
     Y = int(fraction * abs(P0[1]-P1[1]))
 
@@ -37,11 +45,47 @@ def interpolateXY(P0, P1, fraction):
     return (x, y)
 
 
+#--------------------------------------
+# Class: roiRect
+#--------------------------------------
 class roiRect():
+    """A class to define a ROI rectangles of an image.
+
+    A ROI rectangle is defined with the coordinate of the rectangle center and its width and height.
+    In addition, various methods are defined to manage the ROI rectangle.
+
+    Attributes
+    -----------
+    Xc, Yc, W, H: integer
+        define the coordinate of the ROI center, and its size in width and height.
+    Vertex0, Vertex1: (x,y)
+        the top-left and bottom-right vertexes of the ROI rectangle, which are derived from Xc/Yc/W/H.
+
+
+    Methods
+    -----------
+    set_center(x, y)
+        To configure the center coordinate of the rectangle
+    set_size(w, h)
+        To configure the size of the rectangle
+    set_property(...)
+        To configure properties of the rectangle, such as line width, color, enabled, etc.
+    update() --> two vertex points Pt, Pb
+        To update the vertexes of the rectangle and return to caller.
+    """
     def __init__(self, imgW, imgH, **kwargs):
-        ''' imgW: the image width, for boundary handling,
-        imgH: the imgage height, for boundary handling
-        '''
+        """Define a ROI rectangle on an image.
+
+        Arguments
+        ---------------
+        imgW, imgH: integer
+            the size of the image the ROI is on.
+            it is used to check the boundary condition while calculate the vertexes of the rectangle.
+
+        Returns
+        ---------------
+        None
+        """
         self._property = {
             'enabled'       : True,
             'lwidth'        : 2,
@@ -75,25 +119,27 @@ class roiRect():
 
 
     def set_center(self, x, y):
-        ''' Set coordinate (x, y) of the ROI center'''
+        """Set coordinate (x, y) of the ROI center
+        """
         self.Xc = x
         self.Yc = y
         self.is_dirty = True
 
 
     def set_size(self, w, h):
-        ''' Set size (w, h) of the ROI'''
+        """Set size (w, h) of the ROI
+        """
         self.W = w
         self.H = h
         self.is_dirty = True
 
 
     def set_property(self, **kwargs):
-        ''' Set properities :
+        """Set properities :
                 enabled:    True/False -- show or no show
                 lwidth:     width of rectangle line
                 lcolor:     the color to draw rectangle (R, G, B)
-        '''
+        """
         self.is_dirty = True
         for argkey, argval in kwargs.items():
             if argkey == 'enabled':
@@ -107,18 +153,20 @@ class roiRect():
 
 
     def get_property(self, protKey):
-        '''To query property with following key:
+        """To query property with following key:
                 'enabled', 'lwidth', 'lcolor'
-        '''
+        """
         return self._property[protKey]
 
 
     def update(self):
-        ''' To re-calculate the ROI Vertex0 and Vertex1
+        """To re-calculate the ROI Vertex0 and Vertex1
 
-            Return: (Vertex0, Vertex1)
-                where Vertex0, Vertex1 is coordinates of top-left, and bottom-right
-        '''
+        Returns
+        ----------
+        (Vertex0, Vertex1)
+            Vertex0, Vertex1 is coordinates of top-left, and bottom-right.
+        """
         halfW = int(self.W/2)
         halfH = int(self.H/2)
         p0 = (MAX_AB(0, self.Xc-halfW), MAX_AB(0, self.Yc-halfH))
@@ -130,7 +178,9 @@ class roiRect():
 
 
     def draw(self, cv_img):
-        ''' To draw the ROI rectangle onto the image'''
+        """To draw the ROI rectangle on the given image
+            (for debug purpose)
+        """
         if self.is_dirty:
             self.update()
 
@@ -142,11 +192,15 @@ class roiRect():
 
 
     def show(self, cv_window, cv_img):
-        ''' To display the image with ROIs imprinted '''
+        """To display the image with ROIs imprinted
+            (for debug purpose)
+        """
         self.draw(cv_img)
         cv2.imshow(cv_window, cv_img)    #-- (self.gWinName, self.gMatImg)
 
-
+#--------------------------------------
+# Class: ImageROI
+#--------------------------------------
 class ImageROI():
     """A class to define a list of ROI rectangles of an image.
 
@@ -174,9 +228,17 @@ class ImageROI():
     get_vertex_all() --> a list of [ [name:str, Vt:(x,y), Vb:(x,y) ], ...[] ]
         get vertexes of all rectangles
     """
-    def __init__(self, imgW, imgH):    # -- winName, matImg):
-        '''
-        '''
+    def __init__(self, imgW, imgH):
+        """Initialize a dictionary acting as a control list of an image ROI rectangle.
+
+        Arguments
+        ------------
+        imgW, imgH: the width, height of the source image
+
+        Returns
+        ------------
+        None
+        """
         self.ROIs = {}  # -- use Dictionary key="roiName", val=roiRect
         self.imgW = imgW
         self.imgH = imgH
@@ -188,7 +250,7 @@ class ImageROI():
 
         Arguments
         -------------
-        name: str
+        name:str
             the string ID to identify this rectangle
         center:(x,y)
             the center coordinate of the rectangle
@@ -212,26 +274,39 @@ class ImageROI():
         return [ name, rect.Vertex0, rect.Vertex1 ]
 
     def delete(self, name):
+        """Remove the named ROI from the list
+
+        Arguments
+        -------------
+        name:str
+            the name ID to identify the ROI rectangle to be removed
+
+        Returns
+        -------------
+        None
+        """
         self.ROIs.pop(name)
 
     def set_center(self, name, Xc, Yc):
-        ''' Set coordinate (x, y) of the ROI center'''
+        """Set coordinate (x, y) of the named ROI center
+        """
         if name in self.ROIs:
             roi_rect = self.ROIs[name]
             roi_rect.set_center(Xc, Yc)
 
     def set_size(self, name, w, h):
-        ''' Set size (w, h) of the ROI'''
+        """Set size (w, h) of the named ROI
+        """
         if name in self.ROIs:
             roi_rect = self.ROIs[name]
             roi_rect.set_size(w, h)
 
     def set_property(self, name, **kwargs):
-        ''' Set properities :
+        """Set properities of the named ROI :
                 enabled:    True/False -- show or no show
                 lwidth:     width of rectangle line
                 lcolor:     the color to draw rectangle (R, G, B)
-        '''
+        """
         if name in self.ROIs:
             roi_rect = self.ROIs[name]
             for argkey, argval in kwargs.items():
@@ -245,9 +320,9 @@ class ImageROI():
                     pass
 
     def get_property(self, name, protKey):
-        '''To query property with following key:
+        """To query property of the named ROI with following key:
                 'enabled', 'lwidth', 'lcolor'
-        '''
+        """
         if name in self.ROIs:
             roi_rect = self.ROIs[name]
             return roi_rect.get_property[protKey]
@@ -255,23 +330,22 @@ class ImageROI():
             return None
 
     def update(self):
-        ''' To re-calculate the ROI Vertex0 and Vertex1
-
-            Return: (Vertex0, Vertex1)
-                where Vertex0, Vertex1 is coordinates of top-left, and bottom-right
-        '''
+        """To re-calculate the ROI Vertex0 and Vertex1 of all ROI rectangles
+        """
         for k in self.ROIs:
             self.ROIs[k].update()
 
     def draw(self, nameID, cv_img):
-        ''' To draw the specified ROI rectangle on the image'''
+        """To draw the specified ROI rectangle on the image
+            (Debug purpose)
+        """
         # self.matImg = self.matOrigin.copy()
         if nameID in self.ROIs:
             self.ROIs[nameID].draw(cv_img)
 
     def draw_all(self, cv_img):
         """Draw all ROI rectangle on the image
-
+            (Debug purpose)
         Arguements
         -----------
         cv_img: cv image
@@ -285,7 +359,9 @@ class ImageROI():
             self.ROIs[k].draw(cv_img)
 
     def show(self, cv_window, cv_img):
-        ''' To display the image with ROIs imprinted '''
+        """To display the image with ROIs imprinted]
+            (Debug purpose)
+        """
         #self.matImg = self.matOrigin.copy()
         # for k in self.ROIs:
         #     self.ROIs[k].show(self.winName, self.matImg)
