@@ -25,7 +25,7 @@ gIsImgOpened=False
 
 
 #--------------------------------------
-# Class: roiRect
+# Class: ImageShading
 #--------------------------------------
 class ImageShading():
     """A class to define the Luma/Chroma shading operation of an given image.
@@ -62,6 +62,7 @@ class ImageShading():
             'e_size_ratio'      : 0.1,
             'd_field'           : 1.0,
             'hv_field'          : 1.0,
+
         }
         #-- store global variables
         self.gImgW = imgW
@@ -102,6 +103,14 @@ class ImageShading():
         hv_field: float
             * the image field of the horizontal/vertical rectangles
             * ranges from 0.3 to 1.0
+        h_enable: boolean
+            Enable/Disable horizontal shading (Hr, Hl) verification
+        v_enable: boolean
+            Enable/Disable vertical shading (Vt, Vb) verification
+        luma_enable: boolean
+            Enable/Disable luma shading verification
+        chroma_enable: boolean
+            Enable/Disable chroma shading verification
         """
         for argkey, argval in kwargs.items():
             #print(argkey, '= ', argval)
@@ -112,6 +121,14 @@ class ImageShading():
             elif argkey == 'd_field':
                 self._property[argkey] = argval   # the image field ratio of the diagonal rectangles to the center's
             elif argkey == 'hv_field':
+                self._property[argkey] = argval   # the image field ratio of the H/V rectangles to the center's
+            elif argkey == 'h_enable':
+                self._property[argkey] = argval   # the image field ratio of the H/V rectangles to the center's
+            elif argkey == 'v_enable':
+                self._property[argkey] = argval   # the image field ratio of the H/V rectangles to the center's
+            elif argkey == 'luma_enable':
+                self._property[argkey] = argval   # the image field ratio of the H/V rectangles to the center's
+            elif argkey == 'chroma_enable':
                 self._property[argkey] = argval   # the image field ratio of the H/V rectangles to the center's
             else:
                 pass
@@ -329,21 +346,28 @@ class ImageShading():
             # print(k, ': Y_ratio= ', Y_ratio)
             # print(k, ': R_ratio= ', R_ratio)
             # print(k, ': B_ratio= ', B_ratio)
-            if Y_ratio < 0.8 or Y_ratio > 1.2:
-                is_pass = False
-            elif R_ratio < 0.9 or R_ratio > 1.1:
-                is_pass = False
-            elif B_ratio < 0.9 or B_ratio > 1.1:
-                is_pass = False
-            else:
-                is_pass = True
+            is_pass = True
+            if self._property['luma_enable'] == True:
+                if Y_ratio < 0.8 or Y_ratio > 1.2:
+                    is_pass = False
+
+            if self._property['chroma_enable'] == True:
+                if R_ratio < 0.9 or R_ratio > 1.1:
+                    is_pass = False
+                elif B_ratio < 0.9 or B_ratio > 1.1:
+                    is_pass = False
 
             if is_pass or k == 'Co':
                 color = color_pass
             else:
                 color = color_ng
 
-            cv2.rectangle(cv_img, Vt, Vb, color, lwidth)
+            if self._property['h_enable']==False and (k=='Hr' or k=='Hl'):
+                pass
+            elif self._property['v_enable']==False and (k=='Vt' or k=='Vb'):
+                pass
+            else:
+                cv2.rectangle(cv_img, Vt, Vb, color, lwidth)
 
         cv2.imshow(cv_win, cv_img)
 
@@ -362,10 +386,26 @@ def cbfn_Update():
         print('Error: image not opened yet!!')
         return
 
+    gImageShading.set_property(h_enable=False)
+    gImageShading.set_property(v_enable=False)
     if 1==var_chkHori.get() or 1==var_chkVert.get():
         scl_fieldHV.config(state= NORMAL)
+        if 1==var_chkHori.get():
+            gImageShading.set_property(h_enable=True)
+        if 1==var_chkVert.get():
+            gImageShading.set_property(v_enable=True)
     else:
         scl_fieldHV.config(state= DISABLED)
+
+    if 1==var_chkLuma.get():
+        gImageShading.set_property(luma_enable=True)
+    else:
+        gImageShading.set_property(luma_enable=False)
+
+    if 1==var_chkChroma.get():
+        gImageShading.set_property(chroma_enable=True)
+    else:
+        gImageShading.set_property(chroma_enable=False)
 
     #-- Update center rectangle size
     gImageShading.set_property(c_size_ratio=scl_windowSize.get())
@@ -566,11 +606,11 @@ def main():
     # Frame Mid1
     #------------------------------------
     var_chkLuma = IntVar(value=1)
-    chkbtn_Luma = Checkbutton(frmMid1, text='Luma')
+    chkbtn_Luma = Checkbutton(frmMid1, variable=var_chkLuma, text='Luma', command=cbfn_Update)
     chkbtn_Luma.pack(side=LEFT)
 
     var_chkChroma = IntVar(value=1)
-    chkbtn_Chroma = Checkbutton(frmMid1, text='Chroma')
+    chkbtn_Chroma = Checkbutton(frmMid1, variable=var_chkChroma, text='Chroma', command=cbfn_Update)
     chkbtn_Chroma.pack(side=LEFT)
 
     def cbfnScale_WinSize(val):
@@ -597,14 +637,14 @@ def main():
         return
     scl_fieldDiag = Scale(frmMidLeft, label='Diagnal: ', orient=HORIZONTAL, from_=0.1, to=1.0, resolution=0.05, command=cbfnScale_DiagImgField)
     scl_fieldDiag.pack(expand=True, fill=X)
-    scl_fieldDiag.set(0.7)
+    scl_fieldDiag.set(1.0)
 
     def cbfnScale_HvImgField(val):
         cbfn_Update()
         return
     scl_fieldHV = Scale(frmMidLeft, label='H/V: ', orient=HORIZONTAL, from_=0.1, to=1.0, resolution=0.05, command=cbfnScale_HvImgField)
     scl_fieldHV.pack(expand=True, fill=X)
-    scl_fieldHV.set(0.7)
+    scl_fieldHV.set(1.0)
 
     # -- Frame: MidRight
     var_chkHori = IntVar(value=0)
@@ -614,9 +654,6 @@ def main():
     var_chkVert = IntVar(value=0)
     chkbtn_Vert = Checkbutton(frmMidRight, anchor=W, variable=var_chkVert, text='Vertical', command=cbfn_Update)
     chkbtn_Vert.pack(side=TOP, expand=True, fill=X)
-
-
-    #cbfn_Update()
 
     winRoot.mainloop()
 
