@@ -30,12 +30,21 @@ gIsImgOpened=False
 class ImageShading():
     """A class to define the Luma/Chroma shading operation of an given image.
 
+    Attributes
+    --------------
+    gShadingINFO: dict
+        A dictionary acting as a list to store information of each shading rectangle.
+        The shading rectangles have been named as:
+        * Co: the center rectangle
+        * Q1/Q2/Q3/Q3: the diagonal rectangles, where Q1 represents the 1st quadrant.
+        * Hr/Hl: the horizontal rectangles, where Hr:right, Hl:left
+        * Vt/Vb: the vertical rectangles, where Vt:top, Vb:bottom
+        The format of gShadingINFO is defined:
+            { nameID:gShadingRect, }
     Methods
     ---------------
     set_property()
     """
-    shadingID = ['Co', 'Q1', 'Q2', 'Q3', 'Q4', 'Hr', 'Hl', 'Vt', 'Vb' ]
-
     def __init__(self, imgW, imgH):
         """Initialize all shading rectangles
 
@@ -60,18 +69,16 @@ class ImageShading():
         self.gShadingINFO = {}
 
         #-- derive image center coordinate
-        self.gImgXc = int(gImgW / 2)
-        self.gImgYc = int(gImgH / 2)
-        self.gCRoiW = int(gImgW * self._property['c_size_ratio'])
-        self.gCRoiH = int(gImgH * self._property['c_size_ratio'])
-        self.gERoiW = int(gImgW * self._property['e_size_ratio'])
-        self.gERoiH = int(gImgH * self._property['e_size_ratio'])
+        self.gImgXc = int(imgW / 2)
+        self.gImgYc = int(imgH / 2)
+        self.gCRoiW = int(imgW * self._property['c_size_ratio'])
+        self.gCRoiH = int(imgH * self._property['c_size_ratio'])
+        self.gERoiW = int(imgW * self._property['e_size_ratio'])
+        self.gERoiH = int(imgH * self._property['e_size_ratio'])
         #-- create the ROI list
         self.gShadingRECT  = ROI.ImageROI(imgW, imgH)
 
         self._create_shading_rectangles()
-
-        self.gShadingRECT.show(gSrcImgName, gImgWC)
 
 
     def set_property(self, **kwargs):
@@ -97,6 +104,7 @@ class ImageShading():
             * ranges from 0.3 to 1.0
         """
         for argkey, argval in kwargs.items():
+            #print(argkey, '= ', argval)
             if argkey == 'c_size_ratio':
                 self._property[argkey] = argval   # size proportional value of center rectangle to source image
             elif argkey == 'e_size_ratio':
@@ -122,12 +130,12 @@ class ImageShading():
         """
         #-- Center: Co
         rect_name='Co'
-        gShadingRECT.add(rect_name, (self.gImgXc, self.gImgYc), (self.gCRoiW, self.gCRoiH))
+        self.gShadingRECT.add(rect_name, (self.gImgXc, self.gImgYc), (self.gCRoiW, self.gCRoiH))
 
         Po = (self.gImgXc, self.gImgYc)
 
         #-- Quadrants: Q1, Q2, Q3, Q4
-        fraction = self._property['e_field']
+        fraction = self._property['d_field']
         Q1param = { 'name':'Q1', 'Pv':(self.gImgW, 0) }
         Q2param = { 'name':'Q2', 'Pv':(0, 0) }
         Q3param = { 'name':'Q3', 'Pv':(0, self.gImgH) }
@@ -157,8 +165,8 @@ class ImageShading():
         """
         x, y = ROI.interpolateXY(Po, Pv, fraction)
         #print(rect_name, ": Po= ", Po, " Pv= ", Pv, " P= ", (x, y))
-        gShadingRECT.set_center(rect_name, x, y)
-        gShadingRECT.set_size(rect_name, self.gERoiW, self.gERoiH)
+        self.gShadingRECT.set_center(rect_name, x, y)
+        self.gShadingRECT.set_size(rect_name, self.gERoiW, self.gERoiH)
 
 
     def _update_all_rectangles(self):
@@ -166,14 +174,14 @@ class ImageShading():
         """
         rect_name='Co'
         #self.gShadingRECT.set_center(rect_name, self.gImgXc, self.gImgYc)
-        self.gCRoiW = int(gImgW * self._property['c_size_ratio'])
-        self.gCRoiH = int(gImgH * self._property['c_size_ratio'])
+        self.gCRoiW = int(self.gImgW * self._property['c_size_ratio'])
+        self.gCRoiH = int(self.gImgH * self._property['c_size_ratio'])
         self.gShadingRECT.set_size(rect_name, self.gCRoiW, self.gCRoiH)
 
         Po = (self.gImgXc, self.gImgYc)
 
-        self.gERoiW = int(gImgW * self._property['e_size_ratio'])
-        self.gERoiH = int(gImgH * self._property['e_size_ratio'])
+        self.gERoiW = int(self.gImgW * self._property['e_size_ratio'])
+        self.gERoiH = int(self.gImgH * self._property['e_size_ratio'])
 
         #-- Quadrants: Q1, Q2, Q3, Q4
         fraction = self._property['d_field']
@@ -209,7 +217,7 @@ class ImageShading():
         """To calculate the luma/chroma shading of each shading rectangles.
 
         The calculated result is saved in self.gShadingINFO which is a dictionary of the following format:
-            e.g., { 'Co':shadingDict, 'Q1':shadingDict, ... } 
+            e.g., { 'Co':shadingDict, 'Q1':shadingDict, ... }
                 where shadingDict specifies the Luma/Chroma and Vertexes of the named shading rectangle
 
         Arguments
@@ -219,17 +227,17 @@ class ImageShading():
         """
         #-- clear the shading info list
         self.gShadingINFO.clear()
-        
+
         #-- get vertexes of all shading rectangles
         allRect = self.gShadingRECT.get_vertex_all()
         #print(allRect)
 
-        #-- calculate Y, R/G/B of each sub-image 
+        #-- calculate Y, R/G/B of each sub-image
         for rect in allRect:
             nameID = rect[0]
             VPt = rect[1]
             VPb = rect[2]
-            
+
             subimg = cvSrcImg[VPt[1]:VPb[1], VPt[0]:VPb[0]]
             subGray = cv2.cvtColor(subimg, cv2.COLOR_BGR2GRAY)
 
@@ -237,14 +245,14 @@ class ImageShading():
             Gmean = int(np.mean(subimg[:,:,1]))
             Rmean = int(np.mean(subimg[:,:,2]))
             Ymean = int(np.mean(subGray))
-            
+
             Rratio = Rmean/Gmean
             Bratio = Bmean/Gmean
-            
+
             if False:
                 #print(nameID, ": shape= ", subGray.shape, shading rect 的 an= ", Ymean, " Gmean= ", Gmean)
                 Ytext = "Y= "+str(Ymean)
-                RGtext = "R/G= "+ "{:.2f}%".format(Rratio) shading rect 的 
+                RGtext = "R/G= "+ "{:.2f}%".format(Rratio)
                 BGtext = "B/G= "+ "{:.2f}%".format(Bratio)
                 print(Ytext, ' ', RGtext, ' ', BGtext)
 
@@ -269,12 +277,76 @@ class ImageShading():
         """To update vertexes and Y, R/G/B values of all shading rectangles
 
         Call this method to update vertexes and sub-image values if the properties are changed.
+
+        Arguments
+        --------------
+        cvSrcImg: cv2 Mat
+            The source image which is used to get sub-image of each shading rectangle to calculate
+            the luma/chroma information.
         """
         #-- Update vertexes of each shading rectangles
         self._update_all_rectangles()
+        self.gShadingRECT.update()
 
         #-- Recalculate Y, R/G/B values of each shading rectangles
         self._calculate_all_shadings(cvSrcImg)
+
+        return self.gShadingINFO
+
+    def show(self, cv_win, cv_img):
+        """To show all rectangles. (elaborate how to use gShadingINFO)
+
+        Arguments
+        --------------
+        cv_win: cv2 window name
+            The window to display the image with shading rectangles
+
+        cv_img: cv2 Mat
+            The image to draw shading rectangles on
+        """
+        color_pass = (0, 255, 0)
+        color_ng = (0, 0, 255)
+        Co = self.gShadingINFO['Co']
+        Co_Y = Co['Y']
+        Co_R = Co['R']
+        Co_G = Co['G']
+        Co_B = Co['B']
+        lwidth = 2
+        for k in self.gShadingINFO:
+
+            shadingRect = self.gShadingINFO[k]
+            Vt = shadingRect.get('Vt')
+            Vb = shadingRect.get('Vb')
+            _Y = shadingRect['Y']
+            _R = shadingRect['R']
+            _G = shadingRect['G']
+            _B = shadingRect['B']
+
+            #-- check Luma shading
+            Y_ratio = _Y/Co_Y
+            R_ratio = _R/_G
+            B_ratio = _B/_G
+            # print(k, ': Y_ratio= ', Y_ratio)
+            # print(k, ': R_ratio= ', R_ratio)
+            # print(k, ': B_ratio= ', B_ratio)
+            if Y_ratio < 0.8 or Y_ratio > 1.2:
+                is_pass = False
+            elif R_ratio < 0.9 or R_ratio > 1.1:
+                is_pass = False
+            elif B_ratio < 0.9 or B_ratio > 1.1:
+                is_pass = False
+            else:
+                is_pass = True
+
+            if is_pass or k == 'Co':
+                color = color_pass
+            else:
+                color = color_ng
+
+            cv2.rectangle(cv_img, Vt, Vb, color, lwidth)
+
+        cv2.imshow(cv_win, cv_img)
+
 
 
 ###########################################################
@@ -287,6 +359,7 @@ def cbfn_Update():
     global gIsImgOpened
 
     if not gIsImgOpened:
+        print('Error: image not opened yet!!')
         return
 
     if 1==var_chkHori.get() or 1==var_chkVert.get():
@@ -294,13 +367,63 @@ def cbfn_Update():
     else:
         scl_fieldHV.config(state= DISABLED)
 
-    gImgWC = gImgSrc.copy()
-    print('gImgWC renew (2)')
+    #-- Update center rectangle size
+    gImageShading.set_property(c_size_ratio=scl_windowSize.get())
+    gImageShading.set_property(e_size_ratio=scl_windowSize.get())
+    gImageShading.set_property(d_field=scl_fieldDiag.get())
+    gImageShading.set_property(hv_field=scl_fieldHV.get())
 
-    gImageShading.update()
-    cv2.imshow(gSrcImgName, gImgWC)
+    gImgWC = gImgSrc.copy()
+    gImageShading.update(gImgWC)
+
+    gImageShading.show(gSrcImgName, gImgWC)
 
     return
+
+
+
+###########################################################
+# Message Box with OK button
+###########################################################
+def messageBoxOK(title, msg):
+    box = Toplevel()
+    box.title(title)
+    Label(box, text=msg).pack()
+    Button(box, text='OK', command=box.destroy).pack()
+
+
+###########################################################
+# Function: Parse file's path/basename/extname
+###########################################################
+def parse_file_path(fpath):
+
+    print('Input filename: ', fpath)
+
+    # Create root repository folder for output images
+    fdir = os.path.dirname(fpath)
+    ffile = os.path.basename(fpath)
+    fbase, fext = os.path.splitext(ffile)
+    # try:
+    #     fdir = os.path.dirname(fpath)
+    #     ffile = os.path.basename(fpath)
+    #     fbase, fext = os.path.splitext(ffile)
+    # except:
+    #     print("Error: failed to parse file path, name.")
+    #     return '', '', ''
+
+    print('Directory: ', fdir)
+    print("fbase= ", fbase, 'fext= ', fext)
+
+    return fdir, fbase, fext
+
+
+
+###########################################################
+# Function : Callback of Button RESET
+###########################################################
+def cbfnButtonReset():
+    cv2.destroyAllWindows()
+    btnSelectIMG.config(text='Select Image', command=cbfnButton_SelectIMG, bg='LightGreen')
 
 
 ###########################################################
@@ -373,14 +496,15 @@ def cbfnButton_SelectIMG():
     #-------------------------------------------
     # Create shading Rectangles
     #-------------------------------------------
-    gImgWC = gImgSrc.copy()
+    #gImgWC = gImgSrc.copy()
     #cv2.imshow(gSrcImgName, gImgWC)
 
     global gIsImgOpened
     gIsImgOpened = True
 
-    gImageShading = ImageShading(gImgWC.shape[1], gImgWC.shape[0])
-    gImageShading.update(gImgWC)
+    global gImageShading
+    gImageShading = ImageShading(gImgSrc.shape[1], gImgSrc.shape[0])
+    cbfn_Update()
     return
 
 
@@ -452,9 +576,9 @@ def main():
     def cbfnScale_WinSize(val):
         cbfn_Update()
         return
-    scl_windowSize = Scale(frmMid1, label="Window Size (%): ", orient=HORIZONTAL, from_=2, to=20, resolution=1, command=cbfnScale_WinSize)
+    scl_windowSize = Scale(frmMid1, label="Window Size (ratio): ", orient=HORIZONTAL, from_=0.02, to=0.2, resolution=0.01, command=cbfnScale_WinSize)
     scl_windowSize.pack(expand=True, side=RIGHT, fill=X, padx=16)
-    scl_windowSize.set(10)
+    scl_windowSize.set(0.1)
 
     #------------------------------------
     # Frame Mid2

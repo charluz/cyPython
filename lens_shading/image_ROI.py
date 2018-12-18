@@ -6,6 +6,8 @@ import os, sys
 import cv2
 import numpy as np
 
+import cy_debug as DP
+
 # import matplotlib.pyplot as plt
 # from matplotlib import cm
 # from mpl_toolkits.mplot3d import Axes3D
@@ -43,6 +45,7 @@ def interpolateXY(P0, P1, fraction):
         y = MIN_AB(P1[1], P0[1] + Y)
 
     return (x, y)
+
 
 
 #--------------------------------------
@@ -116,11 +119,14 @@ class roiRect():
                 self.H = argVal
             else:
                 pass
+        self.dprint = DP.DebugPrint('roiRect')
+        self.dprint.enable_trace(False)
 
 
     def set_center(self, x, y):
         """Set coordinate (x, y) of the ROI center
         """
+        self.dprint.trace("set_center: ", x, ', ', y)
         self.Xc = x
         self.Yc = y
         self.is_dirty = True
@@ -129,6 +135,7 @@ class roiRect():
     def set_size(self, w, h):
         """Set size (w, h) of the ROI
         """
+        self.dprint.trace("set_size: ", w, ', ', h)
         self.W = w
         self.H = h
         self.is_dirty = True
@@ -143,11 +150,11 @@ class roiRect():
         self.is_dirty = True
         for argkey, argval in kwargs.items():
             if argkey == 'enabled':
-                self._property['enabled'] = argval   # True or False
+                self._property[argkey] = argval   # True or False
             elif argkey == 'lwidth':
-                self._property['lwidth'] = argval   # line width
+                self._property[argkey] = argval   # line width
             elif argkey == 'lcolor':
-                self._property['lcolor'] = argval   # line color
+                self._property[argkey] = argval   # line color
             else:
                 pass
 
@@ -159,8 +166,13 @@ class roiRect():
         return self._property[protKey]
 
 
-    def update(self):
+    def update(self, bounding=True):
         """To re-calculate the ROI Vertex0 and Vertex1
+
+        Arguments
+        ------------
+        bounding: boolean
+            if True, program will re-calculate the center of ROI to align at boundary
 
         Returns
         ----------
@@ -169,11 +181,44 @@ class roiRect():
         """
         halfW = int(self.W/2)
         halfH = int(self.H/2)
-        p0 = (MAX_AB(0, self.Xc-halfW), MAX_AB(0, self.Yc-halfH))
-        p1 = (MIN_AB(self.imgW, self.Xc+halfW), MIN_AB(self.imgH, self.Yc+halfH))
+        #print('halfW= ', halfW, ', halfH= ', halfH)
+        if bounding == True:
+            p0_x = self.Xc-halfW
+            p1_x = self.Xc+halfW
+            if p0_x < 0:
+                p0_x = 0
+                p1_x = self.W
+                self.Xc = halfW
+            elif p1_x > self.imgW-1:
+                p1_x = self.imgW-1
+                p0_x = self.imgW - self.W
+                self.Xc = self.imgW - halfW
+            else:
+                pass
+
+            p0_y = self.Yc-halfH
+            p1_y = self.Yc+halfH
+            if p0_y < 0:
+                p0_y = 0
+                p1_y = self.H
+                self.Yc = halfH
+            elif p1_y > self.imgH-1:
+                p0_y = self.imgH - self.H
+                p1_y = self.imgH -1
+                self.Yc = self.imgH - halfH
+            else:
+                pass
+
+            p0 = (p0_x, p0_y)
+            p1 = (p1_x, p1_y)
+
+        else:
+            p0 = (MAX_AB(0, self.Xc-halfW), MAX_AB(0, self.Yc-halfH))
+            p1 = (MIN_AB(self.imgW, self.Xc+halfW), MIN_AB(self.imgH, self.Yc+halfH))
         self.Vertex0 = p0
         self.Vertex1 = p1
         self.is_dirty = False
+        self.dprint.trace('update(): ', p0, p1)
         return (p0, p1)
 
 
@@ -267,7 +312,7 @@ class ImageROI():
             self.ROIs.setdefault(name, rect)
         else:
             rect = self.ROIs[name]
-            rect.set_center(center[0], enter[1])
+            rect.set_center(center[0], center[1])
             rect.set_size(size[0], size[1])
 
         rect.update()
@@ -311,11 +356,11 @@ class ImageROI():
             roi_rect = self.ROIs[name]
             for argkey, argval in kwargs.items():
                 if argkey == 'enabled':
-                    roi_rect.set_property['enabled'] = argval   # True or False
+                    roi_rect.set_property[argkey] = argval   # True or False
                 elif argkey == 'lwidth':
-                    roi_rect.set_property['lwidth'] = argval   # line width
+                    roi_rect.set_property[argkey] = argval   # line width
                 elif argkey == 'lcolor':
-                    roi_rect.set_property['lcolor'] = argval   # line color
+                    roi_rect.set_property[argkey] = argval   # line color
                 else:
                     pass
 
