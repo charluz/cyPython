@@ -11,8 +11,9 @@ import cv2
 # import matplotlib.pyplot as plt
 # from show_shading3D import show_RGB_shading3D
 
-#import image_ROI as ROI
 import image_Shading as IS
+import cy_CvOSD as OSD
+import cy_debug as DP
 
 
 
@@ -22,6 +23,140 @@ gSrcImgDir=''
 gSrcImgBase=''
 gSrcImgExt=''
 gIsImgOpened=False
+
+
+color_pass = (0, 255, 0)
+color_ng = (0, 0, 255)
+lwidth = 2
+
+
+###########################################################
+# Function : cbfn_Update()
+###########################################################
+
+def test_shading(cv_img, rect_list, spec):
+    """
+    spec: list
+        [centerY, lumaSpecRatioMin, lumaSpecDev, colorSpecDev, chkLuma, chkColor]
+    """
+    maxRect, minRect = [ '' for _ in range(2)]
+    maxY = minY = 0
+    rectY = []
+    for k in rect_list:
+        rect = gShadingINFO[k]
+        # Vt = rect.get('Vt')
+        # Vb = rect.get('Vb')
+        _Y = rect['Y']
+        rectY.append(_Y)
+        if _Y > maxY:
+            maxY = _Y
+            maxRect = k
+        elif _Y < minY:
+            minY = _Y
+            minRect = k
+        else:
+            pass
+    meanRectY = sum(rectY)/len(rectY)
+
+    centerY, specLumaMin, specLumaDev, specColorDev, chkLuma, chkColor = spec
+    dprint.info('SPEC: ', spec)
+    for k in rect_list:
+        rect = gShadingINFO[k]
+        Vt = rect.get('Vt')
+        Vb = rect.get('Vb')
+        _Y, _R, _G, _B = [rect[x] for x in ['Y', 'R', 'G', 'B']]
+        dprint.info(k, ': ', _Y, ', ', _R, ', ', _G, ', ', _B)
+        yC2C = _Y/centerY
+        yDev = _Y/meanRectY
+        r2g = _R/_G
+        b2g = _B/_G
+
+        dprint.info(yC2C, ' ', yDev, ' ', r2g, ' ', b2g)
+        is_pass = True
+        yDev_pass = True
+        chroma_pass = True
+        if chkLuma:
+            #--- Luma C2C (corner to center)
+            if yC2C > 1.0 or yC2C < specLumaMin/100.0:
+                is_pass = False
+            #--- Luma corner to cornerMean deviation
+            if yDev > (100+specLumaDev)/100.0 or yDev < (100-specLumaDev)/100.0:
+                # is_pass = False
+                yDev_pass = False
+
+        if chkColor:
+            #--- R/G deviation
+            if abs(r2g-1.0) > specColorDev/100.0:
+                chroma_pass = False
+            #--- B/G deviation
+            if abs(b2g-1.0) > specColorDev/100.0:
+                chroma_pass = False
+
+        if is_pass:
+            color = color_pass
+        else:
+            color = color_ng
+
+        if chkLuma or chkColor:
+            cv2.rectangle(cv_img, Vt, Vb, color, lwidth)
+            dprint.info(k, ': ', is_pass, yDev_pass)
+            if not yDev_pass:
+                dprint.info(k, ': yDev failed !!')
+                cv2.line(cv_img, Vt, Vb, color_ng, lwidth)
+            if not chroma_pass:
+                dprint.info(k, ': color failed !!')
+                p0=(Vb[0], Vt[1])
+                p1=(Vt[0], Vb[1])
+                cv2.line(cv_img, p0, p1, (0,255,255), lwidth)
+
+        #--- OSD
+        osd = OSD.osdText()
+        text = "%d, %.2f, %.2f" % (_Y, yC2C, yDev)
+        w, h, pads = osd.get_textSize(text)
+        osd.show(cv_img, text, Vt[0], Vt[1])
+        text = "%.2f, %.2f" % (r2g, b2g)
+        osd.show(cv_img, text, Vt[0], Vt[1]+(h+pads*2))
+
+
+def test_all_shadings(cv_win, cv_img):
+    """
+    """
+    global gShadingINFO
+    global var_LumaSpecE2C, var_LumaSpecM2m, var_ColorDev
+    global var_chkLuma, var_chkChroma, var_chkHori, var_chkVert
+
+    lumaSpecC2C = var_LumaSpecE2C.get()
+    lumaSpecDev = var_LumaSpecM2m.get()
+    colorSpecDev = var_ColorDev.get()
+    isChkLuma = var_chkLuma.get()
+    isChkColor = var_chkChroma.get()
+    isChkHorizontal = var_chkHori.get()
+    isChkVertical = var_chkVert.get()
+
+    centerY = gShadingINFO['Co'].get('Y')
+    spec = [centerY, lumaSpecC2C, lumaSpecDev, colorSpecDev, isChkLuma, isChkColor]
+    #-------------------------
+    # Diagonal: Q1/Q2/Q3/Q4
+    #-------------------------
+    #dprint.set_level(DP.DEBUG_INFO)
+    test_shading(cv_img, ['Q1', 'Q2', 'Q3', 'Q4'], spec)
+    #dprint.set_level(DP.DEBUG_ERROR)
+
+    #-------------------------
+    # Horizontal: Hr, Hl
+    #-------------------------
+    if isChkHorizontal:
+        test_shading(cv_img, ['Hr', 'Hl'], spec)
+
+    #-------------------------
+    # Horizontal: Vt, Vb
+    #-------------------------
+    if isChkVertical:
+        test_shading(cv_img, ['Vb', 'Vt'], spec)
+
+    #--- Display
+    cv2.imshow(cv_win, cv_img)
+
 
 
 
@@ -36,7 +171,7 @@ def cbfn_Update():
     global gIsImgOpened
 
     if not gIsImgOpened:
-        print('Error: image not opened yet!!')
+        dprint.warning('image not opened yet!!')
         return
 
     gImageShading.set_property(h_enable=False)
@@ -67,9 +202,11 @@ def cbfn_Update():
     gImageShading.set_property(hv_field=scl_fieldHV.get())
 
     gImgWC = gImgSrc.copy()
-    gImageShading.update(gImgWC)
+    global gShadingINFO
+    gShadingINFO = gImageShading.update(gImgWC)
 
-    gImageShading.show(gSrcImgName, gImgWC)
+    #gImageShading.show(gSrcImgName, gImgWC)
+    test_all_shadings(gSrcImgName, gImgWC)
 
     return
 
@@ -216,6 +353,8 @@ def cbfnButtonMainExit():
 from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
 from tkinter import filedialog
 
+dprint = DP.DebugPrint('ShadingTEST')
+
 def main():
     global winTitle, winRoot
     global scl_windowSize, scl_fieldDiag, scl_fieldHV
@@ -254,18 +393,43 @@ def main():
     #------------------------------------
     # Frame Mid1
     #------------------------------------
+    frmM11 = Frame(frmMid1)
+    frmM11.pack(fill=X, padx=frame_padx, pady=frame_pady)
     var_chkLuma = IntVar(value=1)
-    chkbtn_Luma = Checkbutton(frmMid1, variable=var_chkLuma, text='Luma', command=cbfn_Update)
+    chkbtn_Luma = Checkbutton(frmM11, variable=var_chkLuma, text='Luma', command=cbfn_Update)
     chkbtn_Luma.pack(side=LEFT)
 
+    global var_LumaSpecE2C, var_LumaSpecM2m
+    Label(frmM11, anchor=W, text="Corner/Center, %").pack(side=LEFT, padx=8)
+    var_LumaSpecE2C = IntVar(value=85)
+    entry_LumaSpecE2C = Entry(frmM11, textvariable=var_LumaSpecE2C, validate="focusout", validatecommand=cbfn_Update, width=5)   #-- ratio of Edge(corner) to Center
+    entry_LumaSpecE2C.pack(side=LEFT)
+
+    Label(frmM11, anchor=W, text="Corner Deviation, %").pack(side=LEFT, padx=8)
+    var_LumaSpecM2m = IntVar(value=10)
+    entry_LumaSpecM2m = Entry(frmM11, textvariable=var_LumaSpecM2m, validate="focusout", validatecommand=cbfn_Update, width=5)   #-- Avg(edge) +/- M2m %
+    entry_LumaSpecM2m.pack(side=LEFT)
+
+
+    frmM12 = Frame(frmMid1)
+    frmM12.pack(fill=X, padx=frame_padx, pady=frame_pady)
     var_chkChroma = IntVar(value=1)
-    chkbtn_Chroma = Checkbutton(frmMid1, variable=var_chkChroma, text='Chroma', command=cbfn_Update)
+    chkbtn_Chroma = Checkbutton(frmM12, variable=var_chkChroma, text='Chroma', command=cbfn_Update)
     chkbtn_Chroma.pack(side=LEFT)
 
+    global var_ColorDev
+    Label(frmM12, anchor=W, text="Color Deviation, %").pack(side=LEFT, padx=8)
+    var_ColorDev = IntVar(value=10)
+    entry_ColorDev = Entry(frmM12, textvariable=var_ColorDev, validate="focusout", validatecommand=cbfn_Update, width=5)   #-- Avg(edge) +/- M2m %
+    entry_ColorDev.pack(side=LEFT)
+
+
+    frmM13 = Frame(frmMid1)
+    frmM13.pack(fill=X, padx=frame_padx, pady=frame_pady)
     def cbfnScale_WinSize(val):
         cbfn_Update()
         return
-    scl_windowSize = Scale(frmMid1, label="Window Size (ratio): ", orient=HORIZONTAL, from_=0.02, to=0.2, resolution=0.01, command=cbfnScale_WinSize)
+    scl_windowSize = Scale(frmM13, label="Window Size (ratio): ", orient=HORIZONTAL, from_=0.02, to=0.2, resolution=0.01, command=cbfnScale_WinSize)
     scl_windowSize.pack(expand=True, side=RIGHT, fill=X, padx=16)
     scl_windowSize.set(0.1)
 

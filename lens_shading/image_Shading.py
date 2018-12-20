@@ -300,6 +300,16 @@ class ImageShading():
         cvSrcImg: cv2 Mat
             The source image which is used to get sub-image of each shading rectangle to calculate
             the luma/chroma information.
+
+        Returns
+        -------------
+        gShadingINFO: dict
+            A dictionary giving information of all shading rectangles of the following format:
+            * { "Co":{ rectInfo }, "Q1":{rectInfo}, ... }
+            * rectInfo is a dictionary as well which the format below:
+                1. { "Y":val, "R":val, "G":val, "B":va, "Vt":(x,y), "Vb":(x,) }
+                2. Y/R/G/B are average value of all pixels in shading block.
+                3. Vt and Vb are the top-left and bottom-right point of the shading block.
         """
         #-- Update vertexes of each shading rectangles
         self._update_all_rectangles()
