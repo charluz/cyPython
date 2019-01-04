@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 '''
 from tkFileDialog import askopenfilename
 
-That code would have worked fine in Python 2.x, but it is no longer valid. 
+That code would have worked fine in Python 2.x, but it is no longer valid.
 In Python 3.x, tkFileDialog was renamed to filedialog.
 '''
 
@@ -84,12 +84,12 @@ def createDirectory(name):
             return ""
         print("Directory ", name, " created.")
     else:
-        print("Directory ", name, " already exists.") 
+        print("Directory ", name, " already exists.")
 
     return name
 
-        
-            
+
+
 def createImageRepoRoot(cwd, name):
     # print(cwd + name)
     return createDirectory(cwd+name)
@@ -109,12 +109,17 @@ def cbfnButtonReset():
 ###########################################################
 
 def saveRawGrayImage(rawImg, bayerCode):
-    matRaw = rawImg << (16-int(txtlblRawBits.get()))
+    bits = int(txtlblRawBits.get())
+    if bits > 8:
+        matRaw = rawImg << (16-bits)
+    else:
+        matRaw = rawImg
 
     ## Bayer2Gray
     code = bayer2gray_code.get(bayerCode, cv2.COLOR_BAYER_RG2GRAY)
     matGray = cv2.cvtColor(matRaw, code)
-    matGray = matGray / 256
+    if bits > 8:
+        matGray = matGray / 256
     matGray = matGray.astype(np.uint8)
 
     # print(matGray)
@@ -136,7 +141,8 @@ def saveRawGrayImage(rawImg, bayerCode):
     ## Bayer2BGR
     code = bayer2bgr_code.get(bayerCode, cv2.COLOR_BAYER_RG2BGR)
     matBGR = cv2.cvtColor(matRaw, code)
-    matBGR = matBGR / 256
+    if bits > 8:
+        matBGR = matBGR / 256
     matBGR = matBGR.astype(np.uint8)
 
     win_title = "RAW_RGB"
@@ -144,7 +150,7 @@ def saveRawGrayImage(rawImg, bayerCode):
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
         x, y = bayerImg_geometric.get(101)
         cv2.moveWindow(win_title, x, y)
-        
+
         print(matBGR.shape)
         h, w, c = matBGR.shape
         if w > gMaxImgShowWidth:
@@ -157,7 +163,7 @@ def saveRawGrayImage(rawImg, bayerCode):
     cv2.imwrite(jpgRGB, matBGR)
 
     return
-    
+
 
 ###########################################################
 # Functions : saveSplitedImage
@@ -191,8 +197,8 @@ def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
         x, y = bayerImg_geometric.get(bayerCode)
         cv2.moveWindow(winName, x, y)
         cv2.imshow(winName, matImg)
-    
-    return matImg    
+
+    return matImg
 
 def save_raw_RGrGbB_image(img1, img2, img3, img4):
     saveSplitedImage(img1, 0, gIsShowBayerImage, "RAW_R")
@@ -228,16 +234,16 @@ def save_raw_XXXX_image(img1, img2, img3, img4):
 ###########################################################
 def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     '''
-    @Brief 
+    @Brief
         To split R/Gr/Gb/B components from Bayer Raw image input.
-    @In 
+    @In
         bayerdata   : Raw image input (from io.open/io.read)
         width, height   : size of Raw image
         rawBits     : number of bits per pixel
     @Out
         boolean : indicating success/failure
     @Globals
-        bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 : sub-images of R/Gr/Gb/B. 
+        bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 : sub-images of R/Gr/Gb/B.
             Size of sub-image is (widht/2, height/2).
     '''
     global bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4
@@ -246,22 +252,32 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     simgW, simgH =int(imgW>>1), int(imgH>>1)
     bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
 
-    # print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
+    print("width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
     btnRaw.config(bg='Coral')
     bitshift = rawBits-8
 
+    #print("--- 1 ---")
     imgRaw = bayerdata.reshape(imgH, imgW)
+    #print("--- 1 ---")
     saveRawGrayImage(imgRaw, bayerType)
+    #print("--- 2 ---")
 
-    bayerImgC1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
-    bayerImgC2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
-    bayerImgC3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
-    bayerImgC4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
+    if rawBits > 8:
+        bayerImgC1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
+        bayerImgC2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
+        bayerImgC3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
+        bayerImgC4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
+    else:
+        bayerImgC1 = imgRaw[0:imgH+1, 0:imgW+1]
+        bayerImgC2 = imgRaw[0:imgH+1, 1:imgW+1]
+        bayerImgC3 = imgRaw[1:imgH+1, 0:imgW+1]
+        bayerImgC4 = imgRaw[1:imgH+1, 1:imgW+1]
 
 
-    save_bayer_img = { 
-        0:save_raw_RGrGbB_image, 
+
+    save_bayer_img = {
+        0:save_raw_RGrGbB_image,
         1:save_raw_GrRBGb_image,
         2:save_raw_GbBRGr_image,
         3:save_raw_BGbGrR_image
@@ -291,10 +307,12 @@ def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     # print("Button: Load RAW")
     try:
-        splitBayerRawU16(rawdata, int(txtlblRawWidth.get()), 
-                        int(txtlblRawHeight.get()), 
-                        int(txtlblRawBits.get()),  
+        #print("--- A ---")
+        splitBayerRawU16(rawdata, int(txtlblRawWidth.get()),
+                        int(txtlblRawHeight.get()),
+                        int(txtlblRawBits.get()),
                         bayerSelect.get())
+        #print("--- B ---")
     except:
         cbfnButtonReset()
         return
@@ -308,13 +326,16 @@ def cbfnButtonOpenRaw():
     global gIsShowBayerImage, chkShowBayerImg, gIsShowRawImage, chkShowRawImg
 
     rawfname = filedialog.askopenfilename()
-
+    bits = int(txtlblRawBits.get())
     #print(rawfname)
     try:
         # f = open(rawfname, 'rb')
         # rawdata = f.read()
         # f.close()
-        rawdata = np.fromfile(rawfname, dtype=np.uint16)
+        if bits > 8:
+            rawdata = np.fromfile(rawfname, dtype=np.uint16)
+        else:
+            rawdata = np.fromfile(rawfname, dtype=np.uint8)
     except:
         messageBoxOK('FileIO', 'Failed to open file :\n' + rawfname)
         cbfnButtonReset()
@@ -350,7 +371,7 @@ def cbfnButtonOpenRaw():
 
     return
 
- 
+
 ###########################################################
 # Button Function : Exit Main Window
 ###########################################################
@@ -372,6 +393,9 @@ def config_raw_image_format(szWidth, szHeight, szBits, szBayeName):
 def cbfnButtonConfigAntmanOS05A20():
     config_raw_image_format('2560', '1440', '10', bayerCode_Name2ID('bayerB'))
 
+def cbfnButtonConfigTheiaOS05A20():
+    config_raw_image_format('1600', '1200', '8', bayerCode_Name2ID('bayerB'))
+
 def cbfnButtonConfigAntmanAR0330():
     config_raw_image_format('2304', '1296', '10', bayerCode_Name2ID('bayerGr'))
 
@@ -381,7 +405,7 @@ def cbfnButtonConfigHawkeye():
 
 
 ###########################################################
-# MainEntry 
+# MainEntry
 ###########################################################
 
 if __name__ == "__main__":
@@ -389,28 +413,31 @@ if __name__ == "__main__":
     winTitle = 'Raw Viewer'
     winMain = Tk()
     winMain.title(winTitle)
-    winMain.geometry('460x200')
+    winMain.geometry('500x200')
 
     curRow, curCol = 0, 0
-    # Button : Open RAW 
+    # Button : Open RAW
     btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
     btnRaw.grid(row=curRow, column=0, pady=2)
 
     btnCfgAntman = Button(winMain, text='antOS05A20', command=cbfnButtonConfigAntmanOS05A20, bg='Yellow')
     btnCfgAntman.grid(row=curRow, column=2, pady=2)
 
-    btnCfgAntman = Button(winMain, text='antAR0330', command=cbfnButtonConfigAntmanAR0330, bg='SlateGray1')
+    btnCfgAntman = Button(winMain, text='theiaOS05A20', command=cbfnButtonConfigTheiaOS05A20, bg='LightYellow')
     btnCfgAntman.grid(row=curRow, column=3, pady=2)
 
-    btnCfgAntman = Button(winMain, text='Hawkeye', command=cbfnButtonConfigHawkeye, bg='PaleGreen')
+    btnCfgAntman = Button(winMain, text='antAR0330', command=cbfnButtonConfigAntmanAR0330, bg='SlateGray1')
     btnCfgAntman.grid(row=curRow, column=4, pady=2)
+
+    btnCfgAntman = Button(winMain, text='Hawkeye', command=cbfnButtonConfigHawkeye, bg='PaleGreen')
+    btnCfgAntman.grid(row=curRow, column=5, pady=2)
 
 
 
     curRow +=1
     lblRawWidth = Label(winMain, text='Width')
     lblRawWidth.grid(row=curRow, column=0, pady=2)
-    txtlblRawWidth = StringVar(value='2304') 
+    txtlblRawWidth = StringVar(value='2304')
     entryRawWidth = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawWidth)
     entryRawWidth.grid(row=curRow, column=1, sticky=W)
 
@@ -429,8 +456,8 @@ if __name__ == "__main__":
     #bayer_config = [ ('R', 0), ('Gr', 1), ('Gb', 2), ('B', 3) ]
     for bayer, val, row, col in bayer_config:
         btn = Radiobutton(winMain, text=bayer,
-                    padx = 20, 
-                    variable=bayerSelect, 
+                    padx = 20,
+                    variable=bayerSelect,
                     #command=ShowChoice,
                     value=val)
         btn.grid(row=row, column=col)
@@ -463,4 +490,3 @@ if __name__ == "__main__":
 
 
     winMain.mainloop()
-
