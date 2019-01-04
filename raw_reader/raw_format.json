@@ -1,0 +1,46 @@
+
+{
+    "showBayerColor" : false,
+    "showRawGray"   : true,
+    "showRawRGB"    : false,
+    "width"         : 1600,
+    "height"        : 1200,
+    "bits"          : 8,
+    "bayer"         : 3,
+    "format_1": {
+        "name"          : "antOS05A20",
+        "color"         : "Yellow",
+        "width"         : 2560,
+        "height"        : 1440,
+        "pixel_bits"    : 10,
+        "bayer"         : 3,
+            "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+    },
+    "format_2": {
+        "name"          : "theiaTuning",
+        "color"         : "LightYellow",
+        "width"         : 1600,
+        "height"        : 1200,
+        "pixel_bits"    : 8,
+        "bayer"         : 3,
+            "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+    },
+    "format_3": {
+        "name"          : "antAR0330",
+        "color"         : "SlateGray1",
+        "width"         : 2304,
+        "height"        : 1296,
+        "pixel_bits"    : 10,
+        "bayer"         : 1,
+            "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+    },
+    "format_4": {
+        "name"          : "Hawkeye",
+        "color"         : "PaleGreen",
+        "width"         : 1920,
+        "height"        : 1080,
+        "pixel_bits"    : 14,
+        "bayer"         : 0,
+            "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+    }
+}
