@@ -383,6 +383,21 @@ def cbfnButtonMainExit():
 ###########################################################
 # Button Function : Set Project RAW format
 ###########################################################
+def update_RawFmtButtonColor(activeID):
+    btnRawFmt1.config( fg='Black', bg="#D0D0D0")
+    btnRawFmt2.config( fg='Black', bg="#D0D0D0")
+    btnRawFmt3.config( fg='Black', bg="#D0D0D0")
+    btnRawFmt4.config( fg='Black', bg="#D0D0D0")
+    if activeID == 1:
+        btnRawFmt1.config(fg='Yellow', bg="#0000FF")
+    elif activeID == 2:
+        btnRawFmt2.config(fg='Yellow', bg="#0000FF")
+    elif activeID == 3:
+        btnRawFmt3.config(fg='Yellow', bg="#0000FF")
+    elif activeID == 4:
+        btnRawFmt4.config(fg='Yellow', bg="#0000FF")
+
+
 def config_raw_image_format(szWidth, szHeight, szBits, szBayeName):
     txtlblRawWidth.set(szWidth)
     txtlblRawHeight.set(szHeight)
@@ -391,18 +406,85 @@ def config_raw_image_format(szWidth, szHeight, szBits, szBayeName):
 
 
 def cbfnButtonConfigAntmanOS05A20():
-    config_raw_image_format('2560', '1440', '10', bayerCode_Name2ID('bayerB'))
+    config_raw_image_format(gRawFmtTable["format_1"]["width"],
+                                gRawFmtTable["format_1"]["height"],
+                                gRawFmtTable["format_1"]["pixel_bits"],
+                                gRawFmtTable["format_1"]["bayer"])
+    update_RawFmtButtonColor(1)
 
 def cbfnButtonConfigTheiaOS05A20():
-    config_raw_image_format('1600', '1200', '8', bayerCode_Name2ID('bayerB'))
+    config_raw_image_format(gRawFmtTable["format_2"]["width"],
+                                gRawFmtTable["format_2"]["height"],
+                                gRawFmtTable["format_2"]["pixel_bits"],
+                                gRawFmtTable["format_2"]["bayer"])
+    update_RawFmtButtonColor(2)
 
 def cbfnButtonConfigAntmanAR0330():
-    config_raw_image_format('2304', '1296', '10', bayerCode_Name2ID('bayerGr'))
+    config_raw_image_format(gRawFmtTable["format_3"]["width"],
+                                gRawFmtTable["format_3"]["height"],
+                                gRawFmtTable["format_3"]["pixel_bits"],
+                                gRawFmtTable["format_3"]["bayer"])
+    update_RawFmtButtonColor(3)
 
 def cbfnButtonConfigHawkeye():
-    config_raw_image_format('1920', '1080', '14', bayerCode_Name2ID('bayerR'))
+    config_raw_image_format(gRawFmtTable["format_4"]["width"],
+                                gRawFmtTable["format_4"]["height"],
+                                gRawFmtTable["format_4"]["pixel_bits"],
+                                gRawFmtTable["format_4"]["bayer"])
+    update_RawFmtButtonColor(4)
 
 
+###########################################################
+# RAW Format JSON Parser
+###########################################################
+def raw_format_json_load():
+    import json
+    global gRawFmtTable
+
+    #jsonDict = {}
+    try:
+        with open("./raw_format.json") as f:
+            jsonDict = json.load(f)
+    except:
+        jsonDict = None
+
+    if jsonDict:
+        gRawFmtTable["showBayerColor"] = jsonDict["showBayerColor"]
+        gRawFmtTable["showRawGray"] = jsonDict["showRawGray"]
+        gRawFmtTable["width"] = jsonDict["width"]
+        gRawFmtTable["height"] = jsonDict["height"]
+        gRawFmtTable["bits"] = jsonDict["bits"]
+        gRawFmtTable["bayer"] = jsonDict["bayer"]
+
+        gRawFmtTable["format_1"]["name"] = jsonDict["format_1"]["name"]
+        gRawFmtTable["format_1"]["color"] = jsonDict["format_1"]["color"]
+        gRawFmtTable["format_1"]["width"] = jsonDict["format_1"]["width"]
+        gRawFmtTable["format_1"]["height"] = jsonDict["format_1"]["height"]
+        gRawFmtTable["format_1"]["pixel_bits"] = jsonDict["format_1"]["pixel_bits"]
+        gRawFmtTable["format_1"]["bayer"] = jsonDict["format_1"]["bayer"]
+
+        gRawFmtTable["format_2"]["name"] = jsonDict["format_2"]["name"]
+        gRawFmtTable["format_2"]["color"] = jsonDict["format_2"]["color"]
+        gRawFmtTable["format_2"]["width"] = jsonDict["format_2"]["width"]
+        gRawFmtTable["format_2"]["height"] = jsonDict["format_2"]["height"]
+        gRawFmtTable["format_2"]["pixel_bits"] = jsonDict["format_2"]["pixel_bits"]
+        gRawFmtTable["format_2"]["bayer"] = jsonDict["format_2"]["bayer"]
+
+        gRawFmtTable["format_3"]["name"] = jsonDict["format_3"]["name"]
+        gRawFmtTable["format_3"]["color"] = jsonDict["format_3"]["color"]
+        gRawFmtTable["format_3"]["width"] = jsonDict["format_3"]["width"]
+        gRawFmtTable["format_3"]["height"] = jsonDict["format_3"]["height"]
+        gRawFmtTable["format_3"]["pixel_bits"] = jsonDict["format_3"]["pixel_bits"]
+        gRawFmtTable["format_3"]["bayer"] = jsonDict["format_3"]["bayer"]
+
+        gRawFmtTable["format_4"]["name"] = jsonDict["format_4"]["name"]
+        gRawFmtTable["format_4"]["color"] = jsonDict["format_4"]["color"]
+        gRawFmtTable["format_4"]["width"] = jsonDict["format_4"]["width"]
+        gRawFmtTable["format_4"]["height"] = jsonDict["format_4"]["height"]
+        gRawFmtTable["format_4"]["pixel_bits"] = jsonDict["format_4"]["pixel_bits"]
+        gRawFmtTable["format_4"]["bayer"] = jsonDict["format_4"]["bayer"]
+
+    return jsonDict
 
 ###########################################################
 # MainEntry
@@ -416,42 +498,93 @@ if __name__ == "__main__":
     winMain.geometry('500x200')
 
     curRow, curCol = 0, 0
+    #####################################
     # Button : Open RAW
+    #####################################
     btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
     btnRaw.grid(row=curRow, column=0, pady=2)
 
-    btnCfgAntman = Button(winMain, text='antOS05A20', command=cbfnButtonConfigAntmanOS05A20, bg='Yellow')
-    btnCfgAntman.grid(row=curRow, column=2, pady=2)
+    #####################################
+    # Buttons : Platform RAW Config
+    #####################################
+    gRawFmtTable = {
+        "showBayerColor"    : False,
+        "showRawGray"       : True,
+        "showRawRGB"        : False,
+        "width"         : 1600,
+        "height"        : 1200,
+        "bits"          : 8,
+        "bayer"         : 3,
+    "format_1": {
+            "name"          : "antOS05A20",
+            "color"         : "Yellow",
+            "width"         : 2560,
+            "height"        : 1440,
+            "pixel_bits"    : 10,
+            "bayer"         : 3,
+                "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+        },
+        "format_2": {
+            "name"          : "theiaTuning",
+            "color"         : "LightYellow",
+            "width"         : 1600,
+            "height"        : 1200,
+            "pixel_bits"    : 8,
+            "bayer"         : 3,
+                "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+        },
+        "format_3": {
+            "name"          : "antAR0330",
+            "color"         : "SlateGray1",
+            "width"         : 2304,
+            "height"        : 1296,
+            "pixel_bits"    : 10,
+            "bayer"         : 1,
+                "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+        },
+        "format_4": {
+            "name"          : "Hawkeye",
+            "color"         : "PaleGreen",
+            "width"         : 1920,
+            "height"        : 1080,
+            "pixel_bits"    : 14,
+            "bayer"         : 0,
+                "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+        }
+    }
 
-    btnCfgAntman = Button(winMain, text='theiaOS05A20', command=cbfnButtonConfigTheiaOS05A20, bg='LightYellow')
-    btnCfgAntman.grid(row=curRow, column=3, pady=2)
+    raw_format_json_load()
 
-    btnCfgAntman = Button(winMain, text='antAR0330', command=cbfnButtonConfigAntmanAR0330, bg='SlateGray1')
-    btnCfgAntman.grid(row=curRow, column=4, pady=2)
+    btnRawFmt1 = Button(winMain, text=gRawFmtTable["format_1"]["name"], command=cbfnButtonConfigAntmanOS05A20, bg="#D0D0D0")
+    btnRawFmt1.grid(row=curRow, column=2, pady=2)
 
-    btnCfgAntman = Button(winMain, text='Hawkeye', command=cbfnButtonConfigHawkeye, bg='PaleGreen')
-    btnCfgAntman.grid(row=curRow, column=5, pady=2)
+    btnRawFmt2 = Button(winMain, text=gRawFmtTable["format_2"]["name"], command=cbfnButtonConfigTheiaOS05A20, bg="#D0D0D0")
+    btnRawFmt2.grid(row=curRow, column=3, pady=2)
 
+    btnRawFmt3 = Button(winMain, text=gRawFmtTable["format_3"]["name"], command=cbfnButtonConfigAntmanAR0330, bg="#D0D0D0")
+    btnRawFmt3.grid(row=curRow, column=4, pady=2)
 
+    btnRawFmt4 = Button(winMain, text=gRawFmtTable["format_4"]["name"], command=cbfnButtonConfigHawkeye, bg="#D0D0D0")
+    btnRawFmt4.grid(row=curRow, column=5, pady=2)
 
     curRow +=1
     lblRawWidth = Label(winMain, text='Width')
     lblRawWidth.grid(row=curRow, column=0, pady=2)
-    txtlblRawWidth = StringVar(value='2304')
+    txtlblRawWidth = StringVar(value=gRawFmtTable["width"])
     entryRawWidth = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawWidth)
     entryRawWidth.grid(row=curRow, column=1, sticky=W)
 
     curRow +=1
     lblRawHeight = Label(winMain, text='Height')
     lblRawHeight.grid(row=curRow, column=0, pady=2)
-    txtlblRawHeight = StringVar(value='1296')
+    txtlblRawHeight = StringVar(value=gRawFmtTable["height"])
     entryRawHeight = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawHeight)
     entryRawHeight.grid(row=curRow, column=1, sticky=W)
 
 
     lblRawBayer = Label(winMain, text='Bayer')
     lblRawBayer.grid(row=1, column=3, pady=2)
-    bayerSelect = IntVar(value=1)
+    bayerSelect = IntVar(value=gRawFmtTable["bayer"])
     bayer_config = [ ('R', 0, 2, 3), ('Gr', 1, 2, 4), ('Gb', 2, 3, 3), ('B', 3, 3, 4) ]
     #bayer_config = [ ('R', 0), ('Gr', 1), ('Gb', 2), ('B', 3) ]
     for bayer, val, row, col in bayer_config:
@@ -467,21 +600,26 @@ if __name__ == "__main__":
     curRow +=1
     lblRawBits = Label(winMain, text='Pixel Bits')
     lblRawBits.grid(row=curRow, column=0, padx=2, pady=2)
-    txtlblRawBits = StringVar(value='10')
+    txtlblRawBits = StringVar(value=gRawFmtTable["bits"])
     entryRawBits = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawBits)
     entryRawBits.grid(row=curRow, column=1, sticky=W)
 
     curRow += 1
     Label(winMain, text='ShowRAW').grid(row=curRow, column=0)
     chkShowBayerImg = IntVar()
-    chkShowBayerImg.set(0)
+    chkShowBayerImg.set(gRawFmtTable["showBayerColor"])
     btnShowBayerImg = Checkbutton(winMain, text='BayerColors', variable=chkShowBayerImg)
     btnShowBayerImg.grid(row=curRow, column=1)
 
     chkShowRawImg = IntVar()
-    chkShowRawImg.set(1)
+    chkShowRawImg.set(gRawFmtTable["showRawGray"])
     btnShowRawImg = Checkbutton(winMain, text='RawGray', variable=chkShowRawImg)
     btnShowRawImg.grid(row=curRow, column=2)
+
+    # chkShowRawRGB = IntVar()
+    # chkShowRawRGB.set(gRawFmtTable["showRawRGB"])
+    # btnShowRawRGB = Checkbutton(winMain, text='RawRGB', variable=chkShowRawRGB)
+    # btnShowRawRGB.grid(row=curRow, column=3)
 
     curRow += 2
     # Button : Exit
