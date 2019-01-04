@@ -21,6 +21,7 @@ gImgRepoCurr = gImgRepoRoot
 gRawBaseName = ""
 gIsShowBayerImage = 0
 gIsShowRawImage = 1
+gIsShowRawRGB = 0
 gMaxImgShowWidth = 640
 
 bayerCode_Table = {
@@ -146,7 +147,7 @@ def saveRawGrayImage(rawImg, bayerCode):
     matBGR = matBGR.astype(np.uint8)
 
     win_title = "RAW_RGB"
-    if gIsShowRawImage:
+    if gIsShowRawRGB:
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
         x, y = bayerImg_geometric.get(101)
         cv2.moveWindow(win_title, x, y)
@@ -323,7 +324,9 @@ def cbfnButtonLoadRaw():
 def cbfnButtonOpenRaw():
     global winMain, winTitle, txtlblRawFName, btnRaw, btn
     global rawdata, rawfname, gRawBaseName
-    global gIsShowBayerImage, chkShowBayerImg, gIsShowRawImage, chkShowRawImg
+    global gIsShowBayerImage, chkShowBayerImg
+    global gIsShowRawImage, chkShowRawImg
+    global gIsShowRawRGB, chkShowRawRGB
 
     rawfname = filedialog.askopenfilename()
     bits = int(txtlblRawBits.get())
@@ -365,6 +368,7 @@ def cbfnButtonOpenRaw():
     #btnRaw.config(text='Load RAW', command=cbfnButtonLoadRaw, bg='Yellow')
     gIsShowBayerImage = chkShowBayerImg.get()
     gIsShowRawImage = chkShowRawImg.get()
+    gIsShowRawRGB = chkShowRawRGB.get()
 
     # to Load and Parse RAW images
     cbfnButtonLoadRaw()
@@ -616,10 +620,10 @@ if __name__ == "__main__":
     btnShowRawImg = Checkbutton(winMain, text='RawGray', variable=chkShowRawImg)
     btnShowRawImg.grid(row=curRow, column=2)
 
-    # chkShowRawRGB = IntVar()
-    # chkShowRawRGB.set(gRawFmtTable["showRawRGB"])
-    # btnShowRawRGB = Checkbutton(winMain, text='RawRGB', variable=chkShowRawRGB)
-    # btnShowRawRGB.grid(row=curRow, column=3)
+    chkShowRawRGB = IntVar()
+    chkShowRawRGB.set(gRawFmtTable["showRawRGB"])
+    btnShowRawRGB = Checkbutton(winMain, text='RawRGB', variable=chkShowRawRGB)
+    btnShowRawRGB.grid(row=curRow, column=3)
 
     curRow += 2
     # Button : Exit
