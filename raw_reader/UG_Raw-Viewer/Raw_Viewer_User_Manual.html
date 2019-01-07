@@ -1,0 +1,52 @@
+<h1 id="usersmanualofrawviewer">User's Manual of RAW Viewer</h1>
+
+<p><img src="./R001.jpg" alt="Application Main Window" /></p>
+
+<h2 id="operation">Operation</h2>
+
+<ol>
+<li>Confiure format of target RAW image</li>
+<ul>
+<img src="./O001.jpg" alt="Step1" />
+</ul>
+
+<li><p>Select and Open the target RAW image</p>
+
+<ul>
+<li>Click <strong>OpenRAW</strong> button to select target RAW image.</li>
+
+<li><img src="./O002.jpg" alt="Step2-1" /></li>
+
+<li><img src="./O003.jpg" alt="Step2-2" /></li>
+
+<li><img src="./O004.jpg" alt="Step2-3" /></li></ul></li>
+
+<li><p>Click <strong>RESET</strong> button to dismiss current image, or <strong>Exit</strong> to exit RAW Viewer.</p>
+
+<p><ul>
+<li>After <strong>RESET</strong>, user can select and open next RAW image as Step 1 ~ 3.</li></p>
+
+<p><li><img src="./O005.jpg" alt="" /></li></ul></p></li>
+</ol>
+
+<h2 id="savingconvertedimages">Saving converted images</h2>
+
+<p>No matter what display options are selected, RAW Viewer will convert RAW image and save the converted images automatically. The saved images include: RawGray, RawRGB, and four bayer colors (R/Gr/Gb/B) and will be collected in a sub-folder (_imageRepo) under the work directory of the RAW image.</p>
+
+<p><img src="./Saved-Images.jpg" alt="SavedImage" /></p>
+
+<h2 id="quickconfigbuttons">Quick Config Buttons</h2>
+
+<p>There are four buttons at the top right corner which are provided to configure known project RAW format including width, height, bits per pixel, and starting bayer color.</p>
+
+<p><img src="./R002.jpg" alt="Select a pre-configured RAW format" /></p>
+
+<p>The user can customize the preset format of each button via a JSON-formatted configuration file. While Raw View starts, it will look at the configuration file, <strong>raw_format.json</strong>, in the working directory.</p>
+
+<p><img src="./R003.jpg" alt="Config JSON" /></p>
+
+<h2 id="customizingyourquickconfigbuttons">Customizing your Quick Config buttons</h2>
+
+<p><img src="./R004.jpg" alt="Modify RAW format" /></p>
+
+<p><img src="./R005.jpg" alt="New Format" /></p>
