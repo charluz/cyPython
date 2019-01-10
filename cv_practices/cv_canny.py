@@ -18,9 +18,9 @@ argParser.add_argument("--ht", type=int, help="the high threshold of Canny detec
 args = argParser.parse_args()
 
 gSrcImg = args.srcImg
-kernelSize = Set_Global(args.ksize, 3)
-lowThd = Set_Global(args.lt, 60)
-highThd = Set_Global(args.ht, 150)
+kernelSize = int(Set_Global(args.ksize, 3))
+lowThd = int(Set_Global(args.lt, 60))
+highThd = int(Set_Global(args.ht, 150))
 
 
 #----------------------
@@ -33,15 +33,18 @@ grayImg = cv2.cvtColor(srcImg, cv2.COLOR_BGR2GRAY)
 
 #-- Gaussian blur
 #kernelSize = 3
-blurImg = cv2.GaussianBlur(grayImg, (kernelSize, kernelSize), 0)
+gaussianImg = cv2.GaussianBlur(grayImg, (kernelSize, kernelSize), 0)
+blurImg = cv2.blur(grayImg, (kernelSize, kernelSize) )
+medianImg = cv2.medianBlur(grayImg, kernelSize )
+bilateralImg = cv2.bilateralFilter(grayImg, kernelSize, 31, 31)
 
 #-- Canny edge detection
 #lowThd, highThd = 60, 150
-edgeImg = cv2.Canny(blurImg, lowThd, highThd)
+edgeImg = cv2.Canny(gaussianImg, lowThd, highThd)
 
-windowTitle = "Source"
-cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
-cv2.imshow(windowTitle, srcImg)
+#windowTitle = "Source"
+#cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
+#cv2.imshow(windowTitle, srcImg)
 
 windowTitle = "cvt2Gray"
 cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
@@ -49,7 +52,22 @@ cv2.imshow(windowTitle, grayImg)
 
 windowTitle = "Gaussian Blur"
 cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
-cv2.imshow(windowTitle, blurImg)
+cv2.imshow(windowTitle, gaussianImg)
+
+if False:
+    windowTitle = "Average Blur"
+    cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
+    cv2.imshow(windowTitle, blurImg)
+
+    windowTitle = "Median Blur"
+    cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
+    cv2.imshow(windowTitle, medianImg)
+
+windowTitle = "Bilateral Filter"
+cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
+cv2.imshow(windowTitle, bilateralImg)
+
+
 
 windowTitle = "Canny Edge"
 cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
