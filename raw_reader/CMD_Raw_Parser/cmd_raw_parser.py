@@ -131,7 +131,7 @@ def split_n_save_bayer_raw(imgRaw, nbit, bayerCode):
 
 def save_raw_images(rawImg, bayerCode, nbits):
     global gRawBaseName
-    
+
     bayer2gray_code = {
         0: cv2.COLOR_BAYER_RG2GRAY,
         1: cv2.COLOR_BAYER_GR2GRAY,
@@ -322,7 +322,7 @@ if __name__ == "__main__":
             pass
 
     #-------------------------------------
-    # Open RAW Image
+    # Initialize globals
     #-------------------------------------
     gRawWidth, gRawHeight = gRawFormat["width"], gRawFormat["height"]
     gRawBits = gRawFormat["bits"]
@@ -335,9 +335,10 @@ if __name__ == "__main__":
     if False:   #-- Debug only !!
         print_arguments()
 
-    # print(gRawWidth, " x ", gRawHeight)
+    #-------------------------------------
+    # Open RAW Image
+    #-------------------------------------
     gRawBayer = open_raw_image_file(gRawImgFile, gRawBits)
     gRawBayer = gRawBayer.reshape(gRawHeight, gRawWidth)
 
     parse_n_save_raw_jpeg(gRawBayer, gRawBits, gRawBayerTye)
-
