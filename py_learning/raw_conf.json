@@ -1,0 +1,11 @@
+
+{
+    "showBayerColor" : false,
+    "showRawGray"   : true,
+    "showRawRGB"    : false,
+    "width"         : 2304,
+    "height"        : 1296,
+    "bits"          : 10,
+    "bayer"         : 1,
+		"//baye" : "code: R=0, Gr=1, Gb=2, B=3"
+}
