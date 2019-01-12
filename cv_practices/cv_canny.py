@@ -21,7 +21,7 @@ gSrcImg = args.srcImg
 kernelSize = int(Set_Global(args.ksize, 3))
 lowThd = int(Set_Global(args.lt, 60))
 highThd = int(Set_Global(args.ht, 150))
-
+thdRatio = highThd/lowThd
 
 #----------------------
 # Argument Parse
@@ -54,6 +54,7 @@ windowTitle = "Gaussian Blur"
 cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
 cv2.imshow(windowTitle, gaussianImg)
 
+
 if False:
     windowTitle = "Average Blur"
     cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
@@ -68,9 +69,18 @@ cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
 cv2.imshow(windowTitle, bilateralImg)
 
 
+def CannyLowThresholdAdj(lowThd):
+    global highThd, thdRatio
+    global edgeImg, guassianImg
+    global windowTitle
+
+    highValue = lowThd*thdRatio
+    edgeImg = cv2.Canny(gaussianImg, lowThd, highThd)
+    cv2.imshow(windowTitle, edgeImg)
 
 windowTitle = "Canny Edge"
 cv2.namedWindow(windowTitle, cv2.WINDOW_AUTOSIZE)
+cv2.createTrackbar('barCannyThd', windowTitle, lowThd, 100, CannyLowThresholdAdj)
 cv2.imshow(windowTitle, edgeImg)
 
 while True:
