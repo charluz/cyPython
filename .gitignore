@@ -2,6 +2,8 @@
 _imageRepo
 *.raw
 *.jpg
+.vscode
+
 
 
 # Byte-compiled / optimized / DLL files
