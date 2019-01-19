@@ -42,5 +42,14 @@
         "pixel_bits"    : 14,
         "bayer"         : 0,
             "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+    },
+    "format_5": {
+        "name"          : "Theia5MP",
+        "color"         : "PaleGreen",
+        "width"         : 2688,
+        "height"        : 1944,
+        "pixel_bits"    : 8,
+        "bayer"         : 3,
+            "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
     }
 }
