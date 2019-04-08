@@ -7,7 +7,7 @@ from tkinter import filedialog
 import cv2
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 '''
 from tkFileDialog import askopenfilename
@@ -102,6 +102,7 @@ def createImageRepoRoot(cwd, name):
 def cbfnButtonReset():
     cv2.destroyAllWindows()
     btnRaw.config(text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
+    textvarStatusBar.set("")
 
 
 
@@ -202,28 +203,40 @@ def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
     return matImg
 
 def save_raw_RGrGbB_image(img1, img2, img3, img4):
+    global gbayerMean
     saveSplitedImage(img1, 0, gIsShowBayerImage, "RAW_R")
     saveSplitedImage(img2, 1, gIsShowBayerImage, "RAW_Gr")
     saveSplitedImage(img3, 2, gIsShowBayerImage, "RAW_Gb")
     saveSplitedImage(img4, 3, gIsShowBayerImage, "RAW_B")
+    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[0], gbayerMean[1], gbayerMean[2], gbayerMean[3])
+    return szRawMean
 
 def save_raw_GrRBGb_image(img1, img2, img3, img4):
+    global gbayerMean
     saveSplitedImage(img1, 1, gIsShowBayerImage, "RAW_Gr")
     saveSplitedImage(img2, 0, gIsShowBayerImage, "RAW_R")
     saveSplitedImage(img3, 3, gIsShowBayerImage, "RAW_B")
     saveSplitedImage(img4, 2, gIsShowBayerImage, "RAW_Gb")
+    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[1], gbayerMean[0], gbayerMean[3], gbayerMean[2])
+    return szRawMean
 
 def save_raw_GbBRGr_image(img1, img2, img3, img4):
+    global gbayerMean
     saveSplitedImage(img1, 2, gIsShowBayerImage, "RAW_Gb")
     saveSplitedImage(img2, 3, gIsShowBayerImage, "RAW_B")
     saveSplitedImage(img3, 0, gIsShowBayerImage, "RAW_R")
     saveSplitedImage(img4, 1, gIsShowBayerImage, "RAW_Gr")
+    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[2], gbayerMean[3], gbayerMean[0], gbayerMean[1])
+    return szRawMean
 
 def save_raw_BGbGrR_image(img1, img2, img3, img4):
+    global gbayerMean
     saveSplitedImage(img1, 3, gIsShowBayerImage, "RAW_B")
     saveSplitedImage(img2, 2, gIsShowBayerImage, "RAW_Gb")
     saveSplitedImage(img3, 1, gIsShowBayerImage, "RAW_Gr")
     saveSplitedImage(img4, 0, gIsShowBayerImage, "RAW_R")
+    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[3], gbayerMean[2], gbayerMean[1], gbayerMean[0])
+    return szRawMean
 
 
 def save_raw_XXXX_image(img1, img2, img3, img4):
@@ -260,20 +273,50 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
 
     #print("--- 1 ---")
     imgRaw = bayerdata.reshape(imgH, imgW)
-    #print("--- 1 ---")
+    #print("--- 1-1 ---")
     saveRawGrayImage(imgRaw, bayerType)
     #print("--- 2 ---")
 
+    global gbayerMean
+    gbayerMean = np.zeros(4, dtype=np.float)
     if rawBits > 8:
-        bayerImgC1 = imgRaw[0:imgH+1:2, 0:imgW+1:2] >> bitshift
-        bayerImgC2 = imgRaw[0:imgH+1:2, 1:imgW+1:2] >> bitshift
-        bayerImgC3 = imgRaw[1:imgH+1:2, 0:imgW+1:2] >> bitshift
-        bayerImgC4 = imgRaw[1:imgH+1:2, 1:imgW+1:2] >> bitshift
+        bayerImg = imgRaw[0:imgH+1:2, 0:imgW+1:2]
+        gbayerMean[0] = bayerImg.mean()
+        bayerImgC1 = bayerImg >> bitshift
+
+        bayerImg = imgRaw[0:imgH+1:2, 1:imgW+1:2]
+        gbayerMean[1] = bayerImg.mean()
+        bayerImgC2 = bayerImg >> bitshift
+
+        bayerImg = imgRaw[1:imgH+1:2, 0:imgW+1:2]
+        gbayerMean[2] = bayerImg.mean()
+        bayerImgC3 = bayerImg >> bitshift
+
+        bayerImg = imgRaw[1:imgH+1:2, 1:imgW+1:2]
+        gbayerMean[3] = bayerImg.mean()
+        bayerImgC4 = bayerImg >> bitshift
+
+        #print("Bayer mean: {:.2f}".format(gbayerMean[0]))
     else:
-        bayerImgC1 = imgRaw[0:imgH+1, 0:imgW+1]
-        bayerImgC2 = imgRaw[0:imgH+1, 1:imgW+1]
-        bayerImgC3 = imgRaw[1:imgH+1, 0:imgW+1]
-        bayerImgC4 = imgRaw[1:imgH+1, 1:imgW+1]
+        bayerImgC1 = imgRaw[0:imgH+1:2, 0:imgW+1:2]
+        gbayerMean[0] = bayerImgC1.mean()
+        print("Bayer mean: {:.2f}".format(gbayerMean[0]))
+        #print(bayImgC1[476:497, 612:633])
+
+        bayerImgC2 = imgRaw[0:imgH+1:2, 1:imgW+1:2]
+        gbayerMean[1] = bayerImgC2.mean()
+        print("Bayer mean: {:.2f}".format(gbayerMean[1]))
+        #print(bayImgC2[476:497, 612:633])
+
+        bayerImgC3 = imgRaw[1:imgH+1:2, 0:imgW+1:2]
+        gbayerMean[2] = bayerImgC3.mean()
+        print("Bayer mean: {:.2f}".format(gbayerMean[2]))
+        #print(bayImgC3[476:497, 612:633])
+
+        bayerImgC4 = imgRaw[1:imgH+1:2, 1:imgW+1:2]
+        gbayerMean[3] = bayerImgC4.mean()
+        print("Bayer mean: {:.2f}".format(gbayerMean[3]))
+        #print(bayImgC4[476:497, 612:633])
 
 
 
@@ -285,7 +328,8 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     }
 
     func = save_bayer_img.get(bayerType, save_raw_XXXX_image)
-    func(bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4)
+    szMean = func(bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4)
+    textvarStatusBar.set(szMean)    #-- show Bayer mean values
     btnRaw.config(text='RESET', command=cbfnButtonReset, bg='LightBlue')
 
 
@@ -499,7 +543,7 @@ if __name__ == "__main__":
     winTitle = 'Raw Viewer'
     winMain = Tk()
     winMain.title(winTitle)
-    winMain.geometry('500x200')
+    #winMain.geometry('500x200')
 
     curRow, curCol = 0, 0
     #####################################
@@ -630,5 +674,9 @@ if __name__ == "__main__":
     btnExit = Button(winMain, text='-- EXIT --', command=cbfnButtonMainExit, fg='Yellow', bg='Red')
     btnExit.grid(row=curRow, column=0)
 
+    curRow += 2
+    textvarStatusBar = StringVar(value="")
+    statusBar = Label(winMain, textvariable=textvarStatusBar, relief=SUNKEN, bd=2, anchor=W)
+    statusBar.grid(row=curRow, column=0, columnspan=8, sticky=W+E, padx=4, pady=4)
 
     winMain.mainloop()
