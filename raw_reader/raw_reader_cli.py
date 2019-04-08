@@ -530,7 +530,9 @@ def raw_format_json_load():
 # Print Program arguments
 ###########################################################
 def print_arguments():
+    global gCallByGui
     print("--- Program Arguments -----------------------------------------------")
+    print("Called by GUI: ", gCallByGui)
     argstr = "rawImage"
     print(argstr, ": ", gRawImgFile)
     argstr = "width"
@@ -596,6 +598,7 @@ if __name__ == "__main__":
     argparse.ArgumentParser()
     parser = argparse.ArgumentParser()
     parser.add_argument('rawImg', help="input RAW image file name")
+    parser.add_argument('--gui', nargs='?', const=1, type=int, default=0, help='JSON file for default RAW format.')
     parser.add_argument('--conf', help='JSON file for default RAW format.')
     parser.add_argument("--width", type=int, help='the width of the RAW image')
     parser.add_argument("--height", type=int, help='the height of the RAW image')
@@ -626,6 +629,8 @@ if __name__ == "__main__":
     # Initialize globals
     #-------------------------------------
     gRawImgFile = args.rawImg
+    gCallByGui = args.gui
+
     gRawWidth, gRawHeight = gRawFormat["width"], gRawFormat["height"]
     gRawBits = gRawFormat["bits"]
     gRawBayerType = gRawFormat["bayer"]
@@ -634,7 +639,14 @@ if __name__ == "__main__":
     gIsShowRawImage = gRawFormat["showRawGray"]
     gIsShowRawRGB = gRawFormat["showRawRGB"]
 
+
     if True:   #-- Debug only !!
         print_arguments()
 
     cbfnButtonOpenRaw(gRawImgFile)
+
+    if not gCallByGui:
+        while True:
+            if 27 == cv2.waitKey(100):
+                cv2.destroyAllWindows()
+                break
