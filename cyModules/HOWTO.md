@@ -10,12 +10,15 @@ import os, platform
 
 """
 For Windows OS:
-	os.name == 'nt'
-	platform.system() == "Windows"
+    os.name == 'nt'
+    platform.system() == "Windows"
 """
 
 cyModulesPath = "D:\\cyMyProjects\\gitPython\\cyModules"
 
 if os.name == "nt":
-	sys.path.append(cyModulesPath)
+    sys.path.append(cyModulesPath)
+
+if platform.system() == 'Linux':
+    sys.path.append("~/workbench/gitPython/cyModules")
 ```
