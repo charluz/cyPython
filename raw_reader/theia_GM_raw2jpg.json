@@ -1,0 +1,16 @@
+
+{
+    "showBayerColor" : false,
+    "showRawGray"   : false,
+    "showRawRGB"    : false,
+
+    "saveRawRGB"    : true,
+    "saveRawGray"   : true,
+    "saveBayerColor"  : false,
+
+    "width"         : 2688,
+    "height"        : 1944,
+    "bits"          : 8,
+    "bayer"         : 3,
+    "//note": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+}

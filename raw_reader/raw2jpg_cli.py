@@ -1,38 +1,33 @@
 #!/usr/bin/python
 
 import os, sys
-
 import cv2
-
 import argparse
-
 import numpy as np
-# import matplotlib.pyplot as plt
 
-'''
-from tkFileDialog import askopenfilename
-
-That code would have worked fine in Python 2.x, but it is no longer valid.
-In Python 3.x, tkFileDialog was renamed to filedialog.
-'''
-
-"""
-Note: global variables for RAW image will be overwritten by argparser.
-      Here is to declare the global for convenience purpose.
-"""
 gRawImgFile = "undefined.raw"
+
 gRawWidth = 1920
 gRawHeiht = 1080
 gRawBits = 12
 gRawBayerType = 'B'
 
+gOutputDir = None
+gBatchMode = False
+
 
 gImgRepoRoot = repr(os.getcwd())
 gImgRepoCurr = gImgRepoRoot
 gRawBaseName = ""
+
 gIsShowBayerImage = 0
-gIsShowRawImage = 1
+gIsShowRawGray = 1
 gIsShowRawRGB = 0
+
+gIsSaveBayerColor = 1
+gIsSaveRawGray = 1
+gIsSaveRawRGB = 1
+
 gMaxImgShowWidth = 640
 
 bayerCode_Table = {
@@ -94,9 +89,10 @@ def createDirectory(name):
         except:
             messageBoxOK("Error", "Can't create folder : \n"+repr(name))
             return ""
-        print("Directory ", name, " created.")
+        #print("Directory ", name, " created.")
     else:
-        print("Directory ", name, " already exists.")
+        #print("Directory ", name, " already exists.")
+        pass
 
     return name
 
@@ -141,8 +137,8 @@ def saveRawGrayImage(rawImg, bayerCode, bits):
 
     # print(matGray)
     win_title = "RAW_Gray"
-    if gIsShowRawImage:
-        print("Display {} image ...".format(win_title))
+    if gIsShowRawGray:
+        #print("Display {} image ...".format(win_title))
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
         x, y = bayerImg_geometric.get(100)
         cv2.moveWindow(win_title, x, y)
@@ -154,8 +150,9 @@ def saveRawGrayImage(rawImg, bayerCode, bits):
         cv2.imshow(win_title, matGray)
 
     jpgGray = gRawBaseName + "_" + win_title + '.jpg'
-    print("Save {} image ...".format(jpgGray))
-    cv2.imwrite(jpgGray, matGray)
+
+    #print("Save {} image ...".format(jpgGray))
+    if gIsSaveRawGray: cv2.imwrite(jpgGray, matGray)
 
     ## Bayer2BGR
     code = bayer2bgr_code.get(bayerCode, cv2.COLOR_BAYER_RG2BGR)
@@ -166,7 +163,7 @@ def saveRawGrayImage(rawImg, bayerCode, bits):
 
     win_title = "RAW_RGB"
     if gIsShowRawRGB:
-        print("Display {} image ...".format(win_title))
+        #print("Display {} image ...".format(win_title))
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
         x, y = bayerImg_geometric.get(101)
         cv2.moveWindow(win_title, x, y)
@@ -180,8 +177,8 @@ def saveRawGrayImage(rawImg, bayerCode, bits):
         cv2.imshow(win_title, matBGR)
 
     jpgRGB = gRawBaseName + "_" + win_title + '.jpg'
-    print("Saving {} image ...".format(jpgRGB))
-    cv2.imwrite(jpgRGB, matBGR)
+    #print("Saving {} image ...".format(jpgRGB))
+    if gIsSaveRawRGB: cv2.imwrite(jpgRGB, matBGR)
 
     return
 
@@ -190,6 +187,10 @@ def saveRawGrayImage(rawImg, bayerCode, bits):
 # Functions : saveSplitedImage
 ###########################################################
 def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
+
+    if not gIsSaveBayerColor:
+        return
+
     img = imgGray.astype(np.uint8)
     matImg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
     if bayerCode == 0:      # R
@@ -227,7 +228,7 @@ def save_raw_RGrGbB_image(img1, img2, img3, img4):
     saveSplitedImage(img2, 1, gIsShowBayerImage, "RAW_Gr")
     saveSplitedImage(img3, 2, gIsShowBayerImage, "RAW_Gb")
     saveSplitedImage(img4, 3, gIsShowBayerImage, "RAW_B")
-    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[0], gbayerMean[1], gbayerMean[2], gbayerMean[3])
+    szRawMean="Raw_Mean (R/Gr/Gb/B): {:.1f}, {:.1f}, {:.1f}, {:.1f}".format(gbayerMean[0], gbayerMean[1], gbayerMean[2], gbayerMean[3])
     return szRawMean
 
 def save_raw_GrRBGb_image(img1, img2, img3, img4):
@@ -236,7 +237,7 @@ def save_raw_GrRBGb_image(img1, img2, img3, img4):
     saveSplitedImage(img2, 0, gIsShowBayerImage, "RAW_R")
     saveSplitedImage(img3, 3, gIsShowBayerImage, "RAW_B")
     saveSplitedImage(img4, 2, gIsShowBayerImage, "RAW_Gb")
-    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[1], gbayerMean[0], gbayerMean[3], gbayerMean[2])
+    szRawMean="Raw_Mean (R/Gr/Gb/B): {:.1f}, {:.1f}, {:.1f}, {:.1f}".format(gbayerMean[1], gbayerMean[0], gbayerMean[3], gbayerMean[2])
     return szRawMean
 
 def save_raw_GbBRGr_image(img1, img2, img3, img4):
@@ -245,7 +246,7 @@ def save_raw_GbBRGr_image(img1, img2, img3, img4):
     saveSplitedImage(img2, 3, gIsShowBayerImage, "RAW_B")
     saveSplitedImage(img3, 0, gIsShowBayerImage, "RAW_R")
     saveSplitedImage(img4, 1, gIsShowBayerImage, "RAW_Gr")
-    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[2], gbayerMean[3], gbayerMean[0], gbayerMean[1])
+    szRawMean="Raw_Mean (R/Gr/Gb/B): {:.1f}, {:.1f}, {:.1f}, {:.1f}".format(gbayerMean[2], gbayerMean[3], gbayerMean[0], gbayerMean[1])
     return szRawMean
 
 def save_raw_BGbGrR_image(img1, img2, img3, img4):
@@ -254,7 +255,7 @@ def save_raw_BGbGrR_image(img1, img2, img3, img4):
     saveSplitedImage(img2, 2, gIsShowBayerImage, "RAW_Gb")
     saveSplitedImage(img3, 1, gIsShowBayerImage, "RAW_Gr")
     saveSplitedImage(img4, 0, gIsShowBayerImage, "RAW_R")
-    szRawMean="Raw Mean (R/Gr/Gb/B): ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format(gbayerMean[3], gbayerMean[2], gbayerMean[1], gbayerMean[0])
+    szRawMean="Raw_Mean (R/Gr/Gb/B): {:.1f}, {:.1f}, {:.1f}, {:.1f}".format(gbayerMean[3], gbayerMean[2], gbayerMean[1], gbayerMean[0])
     return szRawMean
 
 
@@ -285,16 +286,21 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     simgW, simgH =int(imgW>>1), int(imgH>>1)
     bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 = [np.zeros([simgH, simgW, 1], np.uint8) for x in range(4)]
 
-    print("splitBayerRawU16: width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
+    if not gBatchMode: print("splitBayerRawU16: width %d -> %d, height %d -> %d" % (imgW, simgW, imgH, simgH))
 
     bitshift = rawBits-8
 
-    print("--- Reshaping raw image --- {} to {}x{}".format(bayerdata.shape[0], imgW, imgH))
-    imgRaw = bayerdata.reshape(imgH, imgW)
-    print("--- Saving RawGRAY image ---")
+    #print("--- Reshaping raw image --- {} to {}x{}".format(bayerdata.shape[0], imgW, imgH))
+    try:
+        imgRaw = bayerdata.reshape(imgH, imgW)
+    except:
+        print("ERROR: Reshaping raw image failed!")
+        cbfnButtonReset()
+
+    #print("--- Saving RawGRAY image ---")
     saveRawGrayImage(imgRaw, bayerType, rawBits)
 
-    print("--- Calculate RAW means ---")
+    #print("--- Calculate RAW means ---")
     global gbayerMean
     gbayerMean = np.zeros(4, dtype=np.float)
     if rawBits > 8:
@@ -334,7 +340,7 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
         gbayerMean[3] = bayerImgC4.mean()
         #print("Bayer mean: {:.2f}".format(gbayerMean[3]))
 
-    print("Bayer mean: C1: {:.1f} C2: {:.1f} C3: {:.1f} C4: {:.1f} ".format(gbayerMean[0], gbayerMean[1], gbayerMean[2], gbayerMean[3]))
+    # print("Bayer mean: C1: {:.1f} C2: {:.1f} C3: {:.1f} C4: {:.1f} ".format(gbayerMean[0], gbayerMean[1], gbayerMean[2], gbayerMean[3]))
 
     save_bayer_img = {
         0:save_raw_RGrGbB_image,
@@ -370,11 +376,7 @@ def cbfnButtonOpenRaw(rawFileName):
 
 
     bits = gRawBits
-    #print(gRawImgFile)
     try:
-        # f = open(gRawImgFile, 'rb')
-        # gimgRaw = f.read()
-        # f.close()
         if bits > 8:
             gimgRaw = np.fromfile(rawFileName, dtype=np.uint16)
         else:
@@ -384,28 +386,41 @@ def cbfnButtonOpenRaw(rawFileName):
         cbfnButtonReset()
         return
 
+    #-------------------------------------------------------
     # Create root repository folder for output images
-    gImgRepoRoot = os.path.dirname(gRawImgFile)
-    os.chdir(gImgRepoRoot)
-    gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
-    # print(gImgRepoRoot)
+    #-------------------------------------------------------
+    if gOutputDir == None:
+        gImgRepoRoot = os.path.dirname(gRawImgFile)
+        os.chdir(gImgRepoRoot)
+        gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
+        # print(gImgRepoRoot)
 
-    # Create folder to save output images for loaded RAW image
-    baseName = os.path.basename(gRawImgFile)
+        # Create folder to save output images for loaded RAW image
+        baseName = os.path.basename(gRawImgFile)
 
-    base, _ = os.path.splitext(baseName)
-    gImgRepoCurr = gImgRepoRoot + "/" + base
-    #print("Target image repo ", gImgRepoCurr)
-    if createDirectory(gImgRepoCurr):
-        os.chdir(gImgRepoCurr)
+        base, _ = os.path.splitext(baseName)
+        gImgRepoCurr = gImgRepoRoot + "/" + base
+        #print("Target image repo ", gImgRepoCurr)
+        if createDirectory(gImgRepoCurr):
+            os.chdir(gImgRepoCurr)
 
-    gRawBaseName = base
-    #print(gRawBaseName)
+        gRawBaseName = base
+        #print(gRawBaseName)
+
+    else :
+        gImgRepoCurr = gOutputDir
+        if createDirectory(gImgRepoCurr):
+            os.chdir(gImgRepoCurr)
+        # Create folder to save output images for loaded RAW image
+        baseName = os.path.basename(gRawImgFile)
+        gRawBaseName, _ = os.path.splitext(baseName)
+
 
     # to Load and Parse RAW images
     cbfnButtonLoadRaw(gimgRaw)
 
     return
+
 
 
 ###########################################################
@@ -415,112 +430,6 @@ def cbfnButtonMainExit():
     print("<<<cbfnButtonMainExit>>>")
     cv2.destroyAllWindows()
     return
-
-###########################################################
-# Button Function : Set Project RAW format
-###########################################################
-def update_RawFmtButtonColor(activeID):
-    btnRawFmt1.config( fg='Black', bg="#D0D0D0")
-    btnRawFmt2.config( fg='Black', bg="#D0D0D0")
-    btnRawFmt3.config( fg='Black', bg="#D0D0D0")
-    btnRawFmt4.config( fg='Black', bg="#D0D0D0")
-    if activeID == 1:
-        btnRawFmt1.config(fg='Yellow', bg="#0000FF")
-    elif activeID == 2:
-        btnRawFmt2.config(fg='Yellow', bg="#0000FF")
-    elif activeID == 3:
-        btnRawFmt3.config(fg='Yellow', bg="#0000FF")
-    elif activeID == 4:
-        btnRawFmt4.config(fg='Yellow', bg="#0000FF")
-
-
-def config_raw_image_format(szWidth, szHeight, szBits, szBayeName):
-    txtlblRawWidth.set(szWidth)
-    txtlblRawHeight.set(szHeight)
-    txtlblRawBits.set(szBits)
-    bayerSelect.set(szBayeName)
-
-
-def cbfnButtonConfigAntmanOS05A20():
-    config_raw_image_format(gRawFmtTable["format_1"]["width"],
-                                gRawFmtTable["format_1"]["height"],
-                                gRawFmtTable["format_1"]["pixel_bits"],
-                                gRawFmtTable["format_1"]["bayer"])
-    update_RawFmtButtonColor(1)
-
-def cbfnButtonConfigTheiaOS05A20():
-    config_raw_image_format(gRawFmtTable["format_2"]["width"],
-                                gRawFmtTable["format_2"]["height"],
-                                gRawFmtTable["format_2"]["pixel_bits"],
-                                gRawFmtTable["format_2"]["bayer"])
-    update_RawFmtButtonColor(2)
-
-def cbfnButtonConfigAntmanAR0330():
-    config_raw_image_format(gRawFmtTable["format_3"]["width"],
-                                gRawFmtTable["format_3"]["height"],
-                                gRawFmtTable["format_3"]["pixel_bits"],
-                                gRawFmtTable["format_3"]["bayer"])
-    update_RawFmtButtonColor(3)
-
-def cbfnButtonConfigHawkeye():
-    config_raw_image_format(gRawFmtTable["format_4"]["width"],
-                                gRawFmtTable["format_4"]["height"],
-                                gRawFmtTable["format_4"]["pixel_bits"],
-                                gRawFmtTable["format_4"]["bayer"])
-    update_RawFmtButtonColor(4)
-
-
-###########################################################
-# RAW Format JSON Parser
-###########################################################
-def raw_format_json_load():
-    import json
-    global gRawFmtTable
-
-    #jsonDict = {}
-    try:
-        with open("./raw_format.json") as f:
-            jsonDict = json.load(f)
-    except:
-        jsonDict = None
-
-    if jsonDict:
-        gRawFmtTable["showBayerColor"] = jsonDict["showBayerColor"]
-        gRawFmtTable["showRawGray"] = jsonDict["showRawGray"]
-        gRawFmtTable["width"] = jsonDict["width"]
-        gRawFmtTable["height"] = jsonDict["height"]
-        gRawFmtTable["bits"] = jsonDict["bits"]
-        gRawFmtTable["bayer"] = jsonDict["bayer"]
-
-        gRawFmtTable["format_1"]["name"] = jsonDict["format_1"]["name"]
-        gRawFmtTable["format_1"]["color"] = jsonDict["format_1"]["color"]
-        gRawFmtTable["format_1"]["width"] = jsonDict["format_1"]["width"]
-        gRawFmtTable["format_1"]["height"] = jsonDict["format_1"]["height"]
-        gRawFmtTable["format_1"]["pixel_bits"] = jsonDict["format_1"]["pixel_bits"]
-        gRawFmtTable["format_1"]["bayer"] = jsonDict["format_1"]["bayer"]
-
-        gRawFmtTable["format_2"]["name"] = jsonDict["format_2"]["name"]
-        gRawFmtTable["format_2"]["color"] = jsonDict["format_2"]["color"]
-        gRawFmtTable["format_2"]["width"] = jsonDict["format_2"]["width"]
-        gRawFmtTable["format_2"]["height"] = jsonDict["format_2"]["height"]
-        gRawFmtTable["format_2"]["pixel_bits"] = jsonDict["format_2"]["pixel_bits"]
-        gRawFmtTable["format_2"]["bayer"] = jsonDict["format_2"]["bayer"]
-
-        gRawFmtTable["format_3"]["name"] = jsonDict["format_3"]["name"]
-        gRawFmtTable["format_3"]["color"] = jsonDict["format_3"]["color"]
-        gRawFmtTable["format_3"]["width"] = jsonDict["format_3"]["width"]
-        gRawFmtTable["format_3"]["height"] = jsonDict["format_3"]["height"]
-        gRawFmtTable["format_3"]["pixel_bits"] = jsonDict["format_3"]["pixel_bits"]
-        gRawFmtTable["format_3"]["bayer"] = jsonDict["format_3"]["bayer"]
-
-        gRawFmtTable["format_4"]["name"] = jsonDict["format_4"]["name"]
-        gRawFmtTable["format_4"]["color"] = jsonDict["format_4"]["color"]
-        gRawFmtTable["format_4"]["width"] = jsonDict["format_4"]["width"]
-        gRawFmtTable["format_4"]["height"] = jsonDict["format_4"]["height"]
-        gRawFmtTable["format_4"]["pixel_bits"] = jsonDict["format_4"]["pixel_bits"]
-        gRawFmtTable["format_4"]["bayer"] = jsonDict["format_4"]["bayer"]
-
-    return jsonDict
 
 
 
@@ -541,15 +450,19 @@ def print_arguments():
     print(argstr, ": ", gRawFormat[argstr])
     argstr = "bits"
     print(argstr, ": ", gRawFormat[argstr])
+    argstr = "output"
+    print(argstr, ": ", gOutputDir)
     print("---------------------------------------------------------------------")
     print()
+
+
 
 ###########################################################
 # RAW Format JSON Parser
 ###########################################################
 def conf_json_load(strJson):
     import json
-    global gRawFormat
+    global gRawFormat, gProgConf
 
     #jsonDict = {}
     conf_json = strJson
@@ -562,12 +475,18 @@ def conf_json_load(strJson):
 
     #print(jsonDict)
     if jsonDict:
-        # gRawFormat["showBayerColor"] = jsonDict["showBayerColor"]
-        # gRawFormat["showRawGray"] = jsonDict["showRawGray"]
         gRawFormat["width"] = jsonDict["width"]
         gRawFormat["height"] = jsonDict["height"]
         gRawFormat["bits"] = jsonDict["bits"]
         gRawFormat["bayer"] = jsonDict["bayer"]
+
+        gProgConf["showBayerColor"] = jsonDict["showBayerColor"]
+        gProgConf["showRawGray"] = jsonDict["showRawGray"]
+        gProgConf["showRawRGB"] = jsonDict["showRawRGB"]
+
+        gProgConf["saveBayerColor"] = jsonDict["saveBayerColor"]
+        gProgConf["saveRawGray"] = jsonDict["saveRawGray"]
+        gProgConf["saveRawRGB"] = jsonDict["saveRawRGB"]
 
     return jsonDict
 
@@ -579,13 +498,21 @@ def conf_json_load(strJson):
 ###########################################################
 
 gRawFormat = {
-    "showBayerColor"    : False,
-    "showRawGray"       : False,
-    "showRawRGB"        : True,
     "width"         : 1600,
     "height"        : 1200,
     "bits"          : 10,
     "bayer"         : 3,    #-- "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
+}
+
+
+gProgConf = {
+    "showBayerColor"    : False,
+    "showRawGray"       : False,
+    "showRawRGB"        : True,
+
+    "saveRawRGB"        : True,
+    "saveRawGray"       : True,
+    "saveBayerColor"      : True,
 }
 
 
@@ -596,31 +523,33 @@ if __name__ == "__main__":
     argparse.ArgumentParser()
     parser = argparse.ArgumentParser()
     parser.add_argument('rawImg', help="input RAW image file name")
-    parser.add_argument('--gui', nargs='?', const=1, type=int, default=0, help='JSON file for default RAW format.')
+    parser.add_argument('--gui', nargs='?', const=1, type=int, default=0, help='Called by a GUI wrapper if specified')
     parser.add_argument('--conf', help='JSON file for default RAW format.')
     parser.add_argument("--width", type=int, help='the width of the RAW image')
     parser.add_argument("--height", type=int, help='the height of the RAW image')
     parser.add_argument("--bayer", choices=['R', 'Gr', 'Gb', 'B'], help='bayer type of starting pixel\navailable options:R, Gr, Gb, B.')
     parser.add_argument("--bits", type=int, help='number of bits per pixel')
-    parser.add_argument("--scale", type=int, help="percentage to downscale while generating output images, e.g., 30 stands for 30%%.")
+    parser.add_argument("--output", type=str, help='the directory name to store output files')
+    parser.add_argument("--batch", nargs='?', const=1, type=int, default=0, help='running in batch mode if specified')
     parser.add_argument("--ROI", help='+x+y*w+h to specify ROI of RAW image.')
     args = parser.parse_args()
 
     # print(args.conf)
     if args.conf:
         conf_json_load(args.conf)
-    else:
-        if args.width and args.height:
-            gRawFormat["width"]     = args.width
-            gRawFormat["height"]    = args.height
 
-        if args.bits:
-            gRawFormat["bits"]      = args.bits
+    if args.width and args.height:
+        gRawFormat["width"]     = args.width
+        gRawFormat["height"]    = args.height
 
-        if args.bayer:
-            gRawFormat["bayer"]     = args.bayer
+    if args.bits:
+        gRawFormat["bits"]      = args.bits
 
-        pass
+    if args.bayer:
+        gRawFormat["bayer"]     = args.bayer
+
+    if args.output:
+        gOutputDir = args.output
 
 
     #-------------------------------------
@@ -628,22 +557,32 @@ if __name__ == "__main__":
     #-------------------------------------
     gRawImgFile = args.rawImg
     gCallByGui = args.gui
+    if args.batch:
+        gBatchMode = True
+    else:
+        gBatchMode = False
 
     gRawWidth, gRawHeight = gRawFormat["width"], gRawFormat["height"]
     gRawBits = gRawFormat["bits"]
     gRawBayerType = gRawFormat["bayer"]
 
-    gIsShowBayerImage = gRawFormat["showBayerColor"]
-    gIsShowRawImage = gRawFormat["showRawGray"]
-    gIsShowRawRGB = gRawFormat["showRawRGB"]
+    gIsShowBayerImage = gProgConf["showBayerColor"]
+    gIsShowRawGray = gProgConf["showRawGray"]
+    gIsShowRawRGB = gProgConf["showRawRGB"]
 
+    gIsSaveBayerColor = gProgConf["saveBayerColor"]
+    gIsSaveRawGray = gProgConf["saveRawGray"]
+    gIsSaveRawRGB = gProgConf["saveRawRGB"]
 
-    if True:   #-- Debug only !!
+    # print("Show options: {} {} {}".format(gIsShowRawGray, gIsShowRawRGB, gIsShowBayerImage))
+    # print("Save options: {} {} {}".format(gIsSaveRawGray, gIsSaveRawRGB, gIsSaveBayerColor))
+
+    if False:   #-- Debug only !!
         print_arguments()
 
     cbfnButtonOpenRaw(gRawImgFile)
 
-    if not gCallByGui:
+    if not gCallByGui and not gBatchMode:
         while True:
             if 27 == cv2.waitKey(100):
                 cv2.destroyAllWindows()
