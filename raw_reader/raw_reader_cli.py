@@ -1,13 +1,34 @@
 #!/usr/bin/python
 
+<<<<<<< HEAD
 import os, sys
 
 import cv2
 
+=======
+import os, sys, platform
+>>>>>>> b9c61939489b4fd28697745066730c6f6d6949c6
 import argparse
-
+import cv2
 import numpy as np
+
 # import matplotlib.pyplot as plt
+
+
+winModulesPath = "D:\\cyMyProjects\\gitPython\\cyModules"
+linuxModulesPath = "/home/charles/workbench/gitPython/cyModules"
+
+if os.name == "nt":
+    print("appending {} to system path ...".format(winModulesPath))
+    sys.path.append(winModulesPath)
+
+if platform.system() == 'Linux':
+    print("appending {} to system path ...".format(linuxModulesPath))
+    sys.path.append(linuxModulesPath)
+
+from cy_OSUTIL import cyOSUTIL
+
+
 
 '''
 from tkFileDialog import askopenfilename
@@ -83,28 +104,6 @@ def messageBoxOK(title, msg):
     Button(box, text='OK', command=box.destroy).pack()
 
 
-
-###########################################################
-# Functions : Create working folders
-###########################################################
-def createDirectory(name):
-    if not os.path.exists(name):
-        try:
-            os.mkdir(name)
-        except:
-            messageBoxOK("Error", "Can't create folder : \n"+repr(name))
-            return ""
-        print("Directory ", name, " created.")
-    else:
-        print("Directory ", name, " already exists.")
-
-    return name
-
-
-
-def createImageRepoRoot(cwd, name):
-    # print(cwd + name)
-    return createDirectory(cwd+name)
 
 
 ###########################################################
@@ -384,22 +383,22 @@ def cbfnButtonOpenRaw(rawFileName):
         cbfnButtonReset()
         return
 
+    #osUtil = cyOSUTIL()
+    fl_dir, fl_base, _ = cyOSUTIL().parse_path(gRawImgFile)
+    print("{} -> {} {}".format(gRawImgFile, fl_dir, fl_base))
+    gImgRepoRoot = fl_dir
+
     # Create root repository folder for output images
-    gImgRepoRoot = os.path.dirname(gRawImgFile)
-    os.chdir(gImgRepoRoot)
-    gImgRepoRoot = createImageRepoRoot(gImgRepoRoot, "/_imageRepo")
-    # print(gImgRepoRoot)
+    gImgRepoRoot = cyOSUTIL().create_dir(gImgRepoRoot+'/_imageRepo')
+    #print(gImgRepoRoot)
 
     # Create folder to save output images for loaded RAW image
-    baseName = os.path.basename(gRawImgFile)
+    gImgRepoCurr = cyOSUTIL().create_sub_dir(fl_base, gImgRepoRoot)
+    print("Target image repo ", gImgRepoCurr)
+    if gImgRepoCurr:
+        cyOSUTIL().change_dir(gImgRepoCurr)
 
-    base, _ = os.path.splitext(baseName)
-    gImgRepoCurr = gImgRepoRoot + "/" + base
-    #print("Target image repo ", gImgRepoCurr)
-    if createDirectory(gImgRepoCurr):
-        os.chdir(gImgRepoCurr)
-
-    gRawBaseName = base
+    gRawBaseName = fl_base
     #print(gRawBaseName)
 
     # to Load and Parse RAW images
