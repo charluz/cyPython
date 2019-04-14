@@ -62,3 +62,44 @@ def create_sub_dir(sub_name, parent='.'):
 def change_dir(dir_name):
     os.chdir(dir_name)
 
+'''
+    For the given path, get the List of all files in the directory tree
+'''
+def list_dir_files(dirName, extPatt=""):
+    # create a list of file and sub directories
+    # names in the given directory
+    listOfFile = os.listdir(dirName)
+    allFiles = list()
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(dirName, entry)
+        # If entry is a directory then get the list of files in this directory
+        if os.path.isdir(fullPath):
+            allFiles = allFiles + list_dir_files(fullPath, extPatt)
+        else:
+            if extPatt == "":
+                allFiles.append(fullPath)
+            else:
+                _, _, fl_ext = parse_path(fullPath)
+                if fl_ext == extPatt:
+                    allFiles.append(fullPath)
+    return allFiles
+
+
+def list_all_dirs(rootDir):
+    # create a list of file and sub directories
+    # names in the given directory
+    listOfFile = os.listdir(rootDir)
+    allDirs = list()
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(rootDir, entry)
+
+        if os.path.isdir(fullPath):
+            allDirs.append(fullPath)
+            allDirs += list_all_dirs(fullPath)
+
+    return allDirs
+
