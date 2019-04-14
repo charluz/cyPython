@@ -1,19 +1,11 @@
 #!/usr/bin/python
+#-- encoding: utf-8 --
 
-<<<<<<< HEAD
-import os, sys
-
-import cv2
-
-=======
 import os, sys, platform
->>>>>>> b9c61939489b4fd28697745066730c6f6d6949c6
+
 import argparse
 import cv2
 import numpy as np
-
-# import matplotlib.pyplot as plt
-
 
 winModulesPath = "D:\\cyMyProjects\\gitPython\\cyModules"
 linuxModulesPath = "/home/charles/workbench/gitPython/cyModules"
@@ -28,19 +20,6 @@ if platform.system() == 'Linux':
 
 from cy_OSUTIL import cyOSUTIL
 
-
-
-'''
-from tkFileDialog import askopenfilename
-
-That code would have worked fine in Python 2.x, but it is no longer valid.
-In Python 3.x, tkFileDialog was renamed to filedialog.
-'''
-
-"""
-Note: global variables for RAW image will be overwritten by argparser.
-      Here is to declare the global for convenience purpose.
-"""
 gRawImgFile = "undefined.raw"
 gRawWidth = 1920
 gRawHeiht = 1080
@@ -94,16 +73,6 @@ def bayerCode_Name2ID(szName):
     return bayerCode_Table.get(szName, 0)
 
 
-###########################################################
-# Message Box with OK button
-###########################################################
-def messageBoxOK(title, msg):
-    box = Toplevel()
-    box.title(title)
-    Label(box, text=msg).pack()
-    Button(box, text='OK', command=box.destroy).pack()
-
-
 
 
 ###########################################################
@@ -112,8 +81,6 @@ def messageBoxOK(title, msg):
 def cbfnButtonReset():
     print("<<<cbfnButtonReset>>>")
     cv2.destroyAllWindows()
-    # btnRaw.config(text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
-    # textvarStatusBar.set("")
 
 
 
@@ -258,7 +225,7 @@ def save_raw_BGbGrR_image(img1, img2, img3, img4):
 
 
 def save_raw_XXXX_image(img1, img2, img3, img4):
-    messageBoxOK('ERROR', 'Unknown bayer type !!')
+    print('Error: Unknown bayer type !!')
 
 
 ###########################################################
