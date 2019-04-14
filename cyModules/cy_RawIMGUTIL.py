@@ -7,20 +7,6 @@ import argparse
 import cv2
 import numpy as np
 
-
-SelAB = lambda A_true, B_false, CondSt : A_true if CondSt else B_false
-
-winModulesPath = "D:\\cyMyProjects\\gitPython\\cyModules"
-linuxModulesPath = "/home/charles/workbench/gitPython/cyModules"
-
-if os.name == "nt":
-    print("appending {} to system path ...".format(winModulesPath))
-    sys.path.append(winModulesPath)
-
-if platform.system() == 'Linux':
-    print("appending {} to system path ...".format(linuxModulesPath))
-    sys.path.append(linuxModulesPath)
-
 import cy_OSUTIL as cyOS
 
 debug_ctrl = False
@@ -35,7 +21,7 @@ bayerImg_geometric = { # (X, Y)
 }
 
 
-
+SelAB = lambda A_true, B_false, CondSt : A_true if CondSt else B_false
 
 
 ###########################################################

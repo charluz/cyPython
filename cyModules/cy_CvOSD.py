@@ -11,7 +11,7 @@ class osdText():
 
     Usage:
     -------------
-    1. Import cy_CvOSD as OSD
+    1. from cy_CvOSD import osdText
     1. osd = osdText()
     1. osd.show(cv_img, text, X, Y)
         * where X, Y is the coordinate of top-left point of the text
