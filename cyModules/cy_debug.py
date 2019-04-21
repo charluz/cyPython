@@ -11,11 +11,11 @@ DEBUG_INFO          = 3
 class DebugPrint():
     """
     """
-    def __init__(self, name='DP'):
+    def __init__(self, name='DP', level=DEBUG_ERROR):
         """
         """
         self.prefix = name
-        self.level  = DEBUG_ERROR
+        self.level  = level
         self.trace_en  = False
 
     def set_level(self, level):

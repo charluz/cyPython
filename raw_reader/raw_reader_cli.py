@@ -545,7 +545,7 @@ def conf_json_load(strJson):
 ###########################################################
 
 gRawFormat = {
-    "showBayerColor"    : False,
+w    "showBayerColor"    : False,
     "showRawGray"       : False,
     "showRawRGB"        : True,
     "width"         : 1600,
