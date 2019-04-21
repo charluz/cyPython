@@ -1,16 +1,11 @@
 #!/usr/bin/python
 
 import os, sys
-# from tkinter import *  # Tk, Label, Entry, Radiobutton, IntVar, Button
-# from tkinter import filedialog
+
 import cv2
 import numpy as np
 
 import cy_debug as DP
-
-# import matplotlib.pyplot as plt
-# from matplotlib import cm
-# from mpl_toolkits.mplot3d import Axes3D
 
 MAX_AB = lambda A, B : A if A > B else B
 MIN_AB = lambda A, B : A if A < B else B

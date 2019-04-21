@@ -1,27 +1,14 @@
 #!/usr/bin/python
 
 import os, sys
-import _thread
-import time
 
 import numpy as np
 import cv2
 
-
-# import matplotlib.pyplot as plt
-# from show_shading3D import show_RGB_shading3D
-
-import image_ROI as ROI
-
-
-
-gOpenFileName=''
-gSrcImgName=''
-gSrcImgDir=''
-gSrcImgBase=''
-gSrcImgExt=''
-gIsImgOpened=False
-
+if __name__ == "__main__":
+    import image_ROI as ROI
+else:
+    import cyPyModules.image_ROI as ROI
 
 
 #--------------------------------------

@@ -13,9 +13,9 @@ import cv2
 
 import cyPyModules.Add_cyModules
 import cyPyModules.shading_test_util as shadingUTIL
+import cyPyModules.image_shading as IS
 
 import cy_OSUTIL as cyOS
-import image_Shading as IS
 import cy_CvOSD as OSD
 import cy_debug as DP
 import cy_COMMON as cyCMN
@@ -229,7 +229,7 @@ def exit_prog():
 
 
 if __name__ == "__main__":
-    global gIsGui
+    #global gIsGui
     main()
 
     if gIsGui:
