@@ -38,12 +38,14 @@ bayer2gray_code = {
     3: cv2.COLOR_BAYER_BG2GRAY
 }
 
+
 bayer2bgr_code = {
-    0: cv2.COLOR_BAYER_RG2BGR,
-    1: cv2.COLOR_BAYER_GR2BGR,
-    2: cv2.COLOR_BAYER_GB2BGR,
-    3: cv2.COLOR_BAYER_BG2BGR
+    0: cv2.COLOR_BAYER_BG2BGR,
+    1: cv2.COLOR_BAYER_GB2BGR,
+    2: cv2.COLOR_BAYER_GR2BGR,
+    3: cv2.COLOR_BAYER_RG2BGR
 }
+
 
 bayerImg_geometric = { # (X, Y)
     0: (300, 140),  # R
