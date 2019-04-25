@@ -14,7 +14,7 @@ from show_shading3D import show_RGB_shading3D
 '''
 from tkFileDialog import askopenfilename
 
-That code would have worked fine in Python 2.x, but it is no longer valid. 
+That code would have worked fine in Python 2.x, but it is no longer valid.
 In Python 3.x, tkFileDialog was renamed to filedialog.
 '''
 
@@ -33,10 +33,10 @@ bayer2gray_code = {
 }
 
 bayer2bgr_code = {
-    0: cv2.COLOR_BAYER_RG2BGR,
-    1: cv2.COLOR_BAYER_GR2BGR,
-    2: cv2.COLOR_BAYER_GB2BGR,
-    3: cv2.COLOR_BAYER_BG2BGR
+    0: cv2.COLOR_BAYER_BG2BGR,
+    1: cv2.COLOR_BAYER_GB2BGR,
+    2: cv2.COLOR_BAYER_GR2BGR,
+    3: cv2.COLOR_BAYER_RG2BGR
 }
 
 bayerImg_geometric = { # (X, Y)
@@ -72,12 +72,12 @@ def createDirectory(name):
             return ""
         print("Directory ", name, " created.")
     else:
-        print("Directory ", name, " already exists.") 
+        print("Directory ", name, " already exists.")
 
     return name
 
-        
-            
+
+
 def createImageRepoRoot(cwd, name):
     # print(cwd + name)
     return createDirectory(cwd+name)
@@ -132,7 +132,7 @@ def saveRawGrayImage(rawImg, bayerCode):
         cv2.namedWindow(win_title, cv2.WINDOW_NORMAL)
         x, y = bayerImg_geometric.get(101)
         cv2.moveWindow(win_title, x, y)
-        
+
         print(matBGR.shape)
         h, w, c = matBGR.shape
         if w > gMaxImgShowWidth:
@@ -145,7 +145,7 @@ def saveRawGrayImage(rawImg, bayerCode):
     cv2.imwrite(jpgRGB, matBGR)
 
     return
-    
+
 
 ###########################################################
 # Functions : saveSplitedImage
@@ -179,8 +179,8 @@ def saveSplitedImage(imgGray, bayerCode, isShowImg, winName):
         x, y = bayerImg_geometric.get(bayerCode)
         cv2.moveWindow(winName, x, y)
         cv2.imshow(winName, matImg)
-    
-    return matImg    
+
+    return matImg
 
 def save_raw_RGrGbB_image(img1, img2, img3, img4):
     saveSplitedImage(img1, 0, gIsShowBayerImage, "RAW_R")
@@ -216,16 +216,16 @@ def save_raw_XXXX_image(img1, img2, img3, img4):
 ###########################################################
 def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
     '''
-    @Brief 
+    @Brief
         To split R/Gr/Gb/B components from Bayer Raw image input.
-    @In 
+    @In
         bayerdata   : Raw image input (from io.open/io.read)
         width, height   : size of Raw image
         rawBits     : number of bits per pixel
     @Out
         boolean : indicating success/failure
     @Globals
-        bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 : sub-images of R/Gr/Gb/B. 
+        bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4 : sub-images of R/Gr/Gb/B.
             Size of sub-image is (widht/2, height/2).
     '''
     global bayerImgC1, bayerImgC2, bayerImgC3, bayerImgC4
@@ -252,7 +252,7 @@ def splitBayerRawU16(bayerdata, width, height, rawBits, bayerType):
         { 'Gr':bayerImgC1, 'R':bayerImgC2, 'B':bayerImgC3, 'Gb':bayerImgC4 }, # Bayer-Gr
         { 'Gb':bayerImgC1, 'B':bayerImgC2, 'R':bayerImgC3, 'Gr':bayerImgC4 }, # Bayer-Gb
         { 'B':bayerImgC1, 'Gb':bayerImgC2, 'Gr':bayerImgC3, 'R':bayerImgC4 } # Bayer-B
-    ] 
+    ]
 
     h, w = bayerImgC1.shape
     dictBayerImg = bayerColor_LUT[bayerType]
@@ -281,9 +281,9 @@ def cbfnButtonLoadRaw():
     global btnRaw, rawdata
     # print("Button: Load RAW")
     try:
-        splitBayerRawU16(rawdata, int(txtlblRawWidth.get()), 
-                        int(txtlblRawHeight.get()), 
-                        int(txtlblRawBits.get()),  
+        splitBayerRawU16(rawdata, int(txtlblRawWidth.get()),
+                        int(txtlblRawHeight.get()),
+                        int(txtlblRawBits.get()),
                         bayerSelect.get())
     except:
         cbfnButtonReset()
@@ -340,7 +340,7 @@ def cbfnButtonOpenRaw():
 
     return
 
- 
+
 ###########################################################
 # Button Function : Exit Main Window
 ###########################################################
@@ -352,7 +352,7 @@ def cbfnButtonMainExit():
 
 
 ###########################################################
-# MainEntry 
+# MainEntry
 ###########################################################
 
 if __name__ == "__main__":
@@ -363,14 +363,14 @@ if __name__ == "__main__":
     winMain.geometry('400x200')
 
     curRow, curCol = 0, 0
-    # Button : Open RAW 
+    # Button : Open RAW
     btnRaw = Button(winMain, text='Open RAW', command=cbfnButtonOpenRaw, bg='LightGreen')
     btnRaw.grid(row=curRow, column=curCol, pady=2)
 
     curRow +=1
     lblRawWidth = Label(winMain, text='Width')
     lblRawWidth.grid(row=curRow, column=0, pady=2)
-    txtlblRawWidth = StringVar(value='2304') 
+    txtlblRawWidth = StringVar(value='2304')
     entryRawWidth = Entry(winMain, bd=2, justify=LEFT, width=10, textvariable=txtlblRawWidth)
     entryRawWidth.grid(row=curRow, column=1, sticky=W)
 
@@ -389,8 +389,8 @@ if __name__ == "__main__":
     #bayer_config = [ ('R', 0), ('Gr', 1), ('Gb', 2), ('B', 3) ]
     for bayer, val, row, col in bayer_config:
         btn = Radiobutton(winMain, text=bayer,
-                    padx = 20, 
-                    variable=bayerSelect, 
+                    padx = 20,
+                    variable=bayerSelect,
                     #command=ShowChoice,
                     value=val)
         btn.grid(row=row, column=col)

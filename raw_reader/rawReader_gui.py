@@ -32,10 +32,10 @@ bayerCode_Table = {
 }
 
 bayer2gray_code = {
-    0: cv2.COLOR_BAYER_RG2GRAY,
-    1: cv2.COLOR_BAYER_GR2GRAY,
-    2: cv2.COLOR_BAYER_GB2GRAY,
-    3: cv2.COLOR_BAYER_BG2GRAY
+    0: cv2.COLOR_BAYER_BG2GRAY,
+    1: cv2.COLOR_BAYER_GB2GRAY,
+    2: cv2.COLOR_BAYER_GR2GRAY,
+    3: cv2.COLOR_BAYER_RG2GRAY
 }
 
 
