@@ -1,4 +1,0 @@
-#!/bin/sh
-
-python cmd_rawRGB_shadingCalc.py sample.jpg
-

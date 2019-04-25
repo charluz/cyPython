@@ -1,3 +1,0 @@
-#!/bin/sh
-
-python cmd_raw_parser.py test_lsc_2304_1296_10bit-2bytes.raw --width 2304 --bits 10 --height 1296
