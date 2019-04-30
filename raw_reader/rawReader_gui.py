@@ -68,10 +68,16 @@ def bayerCode_Name2ID(szName):
 # Message Box with OK button
 ###########################################################
 def messageBoxOK(title, msg):
-    box = Toplevel()
-    box.title(title)
-    Label(box, text=msg).pack()
-    Button(box, text='OK', command=box.destroy).pack()
+    global textvarStatusBar
+    if False:
+        box = Toplevel()
+        box.title(title)
+        Label(box, text=msg).pack()
+        Button(box, text='OK', command=box.destroy).pack()
+    else:
+        sz = title+': '+msg
+        print(sz)
+        textvarStatusBar.set(sz)
 
 
 
@@ -541,6 +547,7 @@ def raw_format_json_load():
 ###########################################################
 
 if __name__ == "__main__":
+    global textvarStatusBar
 
     winTitle = 'Raw Viewer'
     winMain = Tk()
