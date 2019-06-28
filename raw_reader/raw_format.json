@@ -21,7 +21,7 @@
         "color"         : "LightYellow",
         "width"         : 2688,
         "height"        : 1944,
-        "pixel_bits"    : 12,
+        "pixel_bits"    : 10,
         "bayer"         : 3,
             "//a": "bayer cdoe: R=0, Gr=1, Gb=2, B=3"
     },
