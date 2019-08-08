@@ -57,6 +57,27 @@ class osdText():
                                             thickness=self.fontThickness)
         return tw, th, tpad
 
+    def get_next_linetXY(self, text, x, y):
+        """To calculate the coordinate of the line next to current line (text)
+
+        Arguments
+        ----------
+        text: string
+            the text of current line
+        x, y: integer
+            the coordinate of current line
+
+        Returns
+        ----------
+        Xn, Yn: integer
+            the coordinate of the next line
+        """
+        w, h, pads = get_textSize(self, text)
+        Xn= x
+        Yn= y+(h+pads*2)
+        return Xn, Yn
+
+
     def show(self, cv_img, text, X=0, Y=0):
         """To show text on given image
         """
