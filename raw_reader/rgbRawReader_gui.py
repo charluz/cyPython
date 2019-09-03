@@ -95,7 +95,7 @@ def showBenImage(bayerdata, width, height):
 			Size of sub-image is (widht/2, height/2).
 	'''
 	imgW, imgH = int(width), int(height)
-	if True:
+	if False:
 		#-- to create a test array
 		size = imgW * imgH * 3
 		bayerdata = bayerdata[:size]
