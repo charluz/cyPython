@@ -2,6 +2,15 @@
 
 import numpy as np
 from scipy.special import comb
+import matplotlib.pyplot as plt
+
+if False: #-- used to generate Gamma data 
+	gamma = float(input("gamma coefficient= "))
+
+	for x in range(0, 255):
+		y = int(pow(x/255.0, gamma)*255)
+		print("{:3d}\t{:3d}".format(x, y))
+
 
 def bernstein_poly(i, n, t):
     """
@@ -47,22 +56,30 @@ def bezier_curve(points, nTimes=1000):
 
     return xvals, yvals
 
-
 if __name__ == "__main__":
-    from matplotlib import pyplot as plt
+	#-- Read Gamma points
+	X = []
+	Y = []
+	f_gma = "gamma_pt.txt"
+	with open(f_gma, "r")  as f:
+		# for line in f.readlines():
+		# 	print(line.strip())
+		line = f.readline()
+		while line:
+			x, y = line.strip().split()
+			print(x, y)
+			X.append(int(x))
+			Y.append(int(y))
+			line = f.readline()
+	f.close()
 
-    nPoints = 10                                # 設定要產生幾個 random points 
-    points = np.random.rand(nPoints, 2)*200     # np.random.rand(5, 2) --> 產生5個 2-D 的隨機(介於0.0~1.0) ndarray
-    xpoints = [p[0] for p in points]
-    ypoints = [p[1] for p in points]
+	#-- conduct sci bezier curve fitting
+	points = []
+	for i in range(0, len(X)):
+		points.append([X[i], Y[i]])
+	new_x, new_y = bezier_curve(points, nTimes=5000 )
 
-    xvals, yvals = bezier_curve(points, nTimes=1000)
-    
-    plt.plot(xvals, yvals)
-    plt.plot(xpoints, ypoints, "ro")
-
-    # print 出每個點的順序編號
-    for nr in range(len(points)):
-        plt.text(points[nr][0], points[nr][1], nr)
-
-    plt.show()
+plt.plot()
+plt.plot(X, Y, 'o', new_x, new_y)
+plt.xlim(0, 256)
+plt.show()
