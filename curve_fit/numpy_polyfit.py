@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-if False: #-- used to generate Gamma data 
+if False: #-- used to generate Gamma data
 	gamma = float(input("gamma coefficient= "))
 
 	for x in range(0, 255):
@@ -12,7 +12,7 @@ if False: #-- used to generate Gamma data
 
 X = []
 Y = []
-f_gma = "gamma_pt.txt"
+f_gma = "gamma_pt16.txt"
 with open(f_gma, "r")  as f:
 	# for line in f.readlines():
 	# 	print(line.strip())
@@ -23,13 +23,13 @@ with open(f_gma, "r")  as f:
 		X.append(int(x))
 		Y.append(int(y))
 		line = f.readline()
-	
+
 print("list X: ", X)
 print("list Y: ", Y)
 f.close()
 
 #-- conduct numpy polyfit
-order = 6
+order = 4
 z = np.polyfit(X, Y, order)
 print(z)
 fpoly = np.poly1d(z)
