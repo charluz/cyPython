@@ -16,8 +16,7 @@ import scipy.interpolate as spi
 # import requests as req
 
 #---- Use site-packages modules
-from cyCvBox.image_ROIs import ImageROIs as ROIs
-from cyCvBox.image_ROIs import interpolateXY
+
 
 from cyTkGUI.cy_ViPanel import tkViPanel
 from cyTkGUI.cy_ViPanel import tkV3Frame, tkH3Frame,  tkH2Frame, tkV2Frame
@@ -120,6 +119,61 @@ class MainGUI:
 
 
 #---------------------------------------------------------
+# Class
+#---------------------------------------------------------
+class curvePoints:
+	"""
+	"""
+	def __init__(self, pt_file="", name="", debug=False):
+		self.points= None	#-- the list of all points loaded
+
+		if pt_file:
+			self.load_curve_points(pt_file)
+		pass
+
+	def _load_txt_points(self, pt_file):
+		X = []
+		Y = []
+		with open(pt_file, "r")  as f:
+			# for line in f.readlines():
+			# 	print(line.strip())
+			line = f.readline()
+			while line:
+				x, y = line.strip().split()
+				# print(x, y)
+				X.append(x)
+				Y.append(y)
+				line = f.readline()
+		f.close()
+		return len(X), X, Y
+
+
+	def load_curve_points(self, pt_file):
+		type = pt_file[-4:].lower()
+		if type == '.txt':
+			n_points, X, Y = self._load_txt_points(pt_file)
+		else:
+			#-- for json file
+			pass
+		
+		self.n_points = n_points
+		self.raw_X	= X		#-- it's string type
+		self.raw_Y = Y		#-- it's string type
+
+		if self.points is None:
+			self.points = list()	#-- create the list
+		else:
+			self.points[:] = []		#-- clear the list
+
+		for i in range(0, n_points):
+			x =  int(X[i] if X[i].find('.') < 0 else float(X[i])	#-- (we only accept integer or float value)
+			y =  int(Y[i] if Y[i].find('.') < 0 else float(Y[i])
+			self.points.append( (x, y) )
+			pass
+
+
+
+#---------------------------------------------------------
 # Main thread functions
 #---------------------------------------------------------
 def onClose():
@@ -127,23 +181,6 @@ def onClose():
 	evAckClose.set()
 	# print("---- Set ----")
 
-
-def load_curve_conf(conf_file):
-	X = []
-	Y = []
-	f_gma = conf_file
-	with open(f_gma, "r")  as f:
-		# for line in f.readlines():
-		# 	print(line.strip())
-		line = f.readline()
-		while line:
-			x, y = line.strip().split()
-			# print(x, y)
-			X.append(x)
-			Y.append(y)
-			line = f.readline()
-	f.close()
-	return X, Y
 
 #---------------------------------------------------------
 # Main thread Entry
@@ -165,7 +202,13 @@ mainGUI.root.wm_protocol("WM_DELETE_WINDOW", onClose)
 
 #-- Load control points configuration
 if sys.argv[1]:
-	ctrlPoints = load_curve_conf(sys.argv[1])
+	thePoints = curvePoints(pt_file=sys.argv[1])
+
+#-- format the text list of the points
+if thePoints:
+	points = thePoints.points
+	texts = []
+	for 
 
 #----------------------------------------------------
 # Main Loop

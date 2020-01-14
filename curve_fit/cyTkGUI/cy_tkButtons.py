@@ -64,9 +64,9 @@ class XsvButtonStack:
 		btn_labels = [ ("----", i) for i in range(0, num_btn-1)]
 		self.num_btn = num_btn
 		self.orient = "H" if orient=="H" else ("GRID" if orient=="GRID" else "V")
-		self.buttonObject = tkRadioButton(rootwin, buttons=btn_labels,
-				pack_type=self.orient, isRadio=False )
+		self.buttonObject = tkRadioButton(rootwin, buttons=btn_labels, pack_type=self.orient, isRadio=False )
 		self.Buttons = self.buttonObject.Buttons
+		self.num_active = num_btn
 		pass
 
 
