@@ -21,7 +21,8 @@ from cyCvBox.image_ROIs import interpolateXY
 
 from cyTkGUI.cy_ViPanel import tkViPanel
 from cyTkGUI.cy_ViPanel import tkV3Frame, tkH3Frame,  tkH2Frame, tkV2Frame
-# from cyTkGUI.cy_tkButtons import XsvButtonStack
+from cyTkGUI.cy_tkButtons import XsvButtonStack, tkButton
+from cyTkGUI.cy_tkMatplot import tkMatplotFigure
 
 from cy_Utils.cy_TimeStamp import TimeStamp
 
@@ -64,6 +65,8 @@ class MainGUI:
 		#---------------------------------
 		# L1-V1 fame: Menu
 		#---------------------------------
+		self.menubar = TK.Menu(self.mainFrames[0])
+		self.root.configure(menu=self.menubar)
 
 		#---------------------------------
 		# L2-V2 frame: multi function frame (button stack, tuning panel)
@@ -75,33 +78,72 @@ class MainGUI:
 			#---------------------------------
 			self.cxFrames = tkV2Frame(self.multiFrames[0]).Frames
 			if self.cxFrames:
-				self.actionFrames = tkH3Frame(self.cxFrames[0]).Frames
-				# self.pointsFrames = XsvButtonStack(self.cxFrames[1])
+				#-- AddPoint button
+				self.button_AddPoint = tkButton(self.cxFrames[0], photo="images/BTN_plus.gif")
+				self.button_AddPoint.pack()
 
+				#-- MoveUp button
+				self.button_MoveUp = tkButton(self.cxFrames[0], photo="images/BTN_up.gif")
+				self.button_MoveUp.pack()
+
+				#-- MoveDown button
+				self.button_MoveDown = tkButton(self.cxFrames[0], photo="images/BTN_down.gif")
+				self.button_MoveDown.pack()
+
+				#-- DelPoint button
+				self.button_DelPoint = tkButton(self.cxFrames[0], photo="images/BTN_minus.gif")
+				self.button_DelPoint.pack()
+
+				#-- Curve Control Point buttons
+				self.ctrlButtons = XsvButtonStack(self.cxFrames[1])
+
+			#---------------------------------
+			# Curve graph panel and X-Y scale bar
+			#---------------------------------
 			self.tuneFrames = tkV2Frame(self.multiFrames[1]).Frames
 			if self.tuneFrames:
 				self.tuneH1Frames = tkH2Frame(self.tuneFrames[0]).Frames
-				self.yBar = TK.Scale(self.tuneH1Frames[0], from_=0, to=255)
-				# self.graph = 
+				self.yBar = TK.Scale(self.tuneH1Frames[0], from_=0, to=255, length=300)
+				self.yBar.pack(side=TK.LEFT, fill=TK.Y)
 
-				self.tuneH2Frames = tkH2Frame(self.tuneFrames[1]).Frames
-				self.xBar = TK.Scale(self.tuneH2Frames[1], orient='horizontal', from_=0, to=255)
+				self.curveForm = tkMatplotFigure(self.tuneH1Frames[1], figsize=(480, 480, 80))
+				self.curveFig = self.curveForm.get_current_subplot()
 
-			print("---> ")
+				self.xBar = TK.Scale(self.tuneFrames[1], orient='horizontal', from_=0, to=255, length=300)
+				self.xBar.pack(fill=TK.BOTH, expand=TK.YES)
+
 			self.root.mainloop()
 
 
+	def get_figure(self):
+		return self.curveFig
 
 
 #---------------------------------------------------------
 # Main thread functions
 #---------------------------------------------------------
-
-
 def onClose():
 	global evAckClose
 	evAckClose.set()
 	# print("---- Set ----")
+
+
+def load_curve_conf(conf_file):
+	X = []
+	Y = []
+	f_gma = conf_file
+	with open(f_gma, "r")  as f:
+		# for line in f.readlines():
+		# 	print(line.strip())
+		line = f.readline()
+		while line:
+			x, y = line.strip().split()
+			# print(x, y)
+			X.append(x)
+			Y.append(y)
+			line = f.readline()
+	f.close()
+	return X, Y
 
 #---------------------------------------------------------
 # Main thread Entry
@@ -121,12 +163,13 @@ time.sleep(0.01)
 
 mainGUI.root.wm_protocol("WM_DELETE_WINDOW", onClose)
 
+#-- Load control points configuration
+if sys.argv[1]:
+	ctrlPoints = load_curve_conf(sys.argv[1])
+
 #----------------------------------------------------
 # Main Loop
 #----------------------------------------------------
 while True:
 	if evAckClose.isSet():
 		break
-
-
-cv2.destroyAllWindows()
