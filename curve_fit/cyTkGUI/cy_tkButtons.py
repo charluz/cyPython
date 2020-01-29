@@ -97,6 +97,13 @@ class XsvButtonStack:
 				print("[{}] idx({}) is illegal!!".format(self.clsName, idx))
 		pass
 
+	def get_active_index(self):
+		return self.buttonObject.get_value()
+
+
+#---------------------------------------------------------------------------------------
+# simple unit test program
+#---------------------------------------------------------------------------------------
 if __name__ == "__main__":
 
 	#--------------------------------------------------------------------

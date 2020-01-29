@@ -28,6 +28,7 @@ from cyTkGUI.cy_tkMatplot import tkMatplotFigure
 
 from cy_Utils.cy_TimeStamp import TimeStamp
 
+from mainGUI import MainGUI
 
 ###########################################################
 # Argument Parser
@@ -42,81 +43,6 @@ from cy_Utils.cy_TimeStamp import TimeStamp
 # 	help='The jpeg file to display')
 # # parser.add_argument('--jpeg_quality', type=int, help='The JPEG quality for compressing the reply', default=70)
 # args = parser.parse_args()
-
-
-#----------------------------------------------------------------------
-# Main GUI
-#----------------------------------------------------------------------
-class MainGUI:
-	"""
-	"""
-	def __init__(self, tkRoot):
-		self.Tk_mainloop(tkRoot)
-		pass
-
-
-	def Tk_mainloop(self, root):
-		self.root = root
-
-		#---------------------------------
-		#-- Main layout
-		#---------------------------------
-		self.mainFrames = tkV3Frame(self.root).Frames
-
-		#---------------------------------
-		# L1-V1 fame: Menu
-		#---------------------------------
-		self.menubar = TK.Menu(self.mainFrames[0])
-		self.root.configure(menu=self.menubar)
-
-		#---------------------------------
-		# L2-V2 frame: multi function frame (button stack, tuning panel)
-		#---------------------------------
-		self.multiFrames = tkH2Frame(self.mainFrames[2]).Frames
-		if self.multiFrames:
-			#---------------------------------
-			# Action buttons and Curve control point button stack
-			#---------------------------------
-			self.cxFrames = tkV2Frame(self.multiFrames[0]).Frames
-			if self.cxFrames:
-				#-- AddPoint button
-				self.button_AddPoint = tkButton(self.cxFrames[0], photo="images/BTN_plus.gif")
-				self.button_AddPoint.pack()
-
-				#-- MoveUp button
-				self.button_MoveUp = tkButton(self.cxFrames[0], photo="images/BTN_up.gif")
-				self.button_MoveUp.pack()
-
-				#-- MoveDown button
-				self.button_MoveDown = tkButton(self.cxFrames[0], photo="images/BTN_down.gif")
-				self.button_MoveDown.pack()
-
-				#-- DelPoint button
-				self.button_DelPoint = tkButton(self.cxFrames[0], photo="images/BTN_minus.gif")
-				self.button_DelPoint.pack()
-
-				#-- Curve Control Point buttons
-				self.ctrlButtons = XsvButtonStack(self.cxFrames[1])
-
-			#---------------------------------
-			# Curve graph panel and X-Y scale bar
-			#---------------------------------
-			self.tuneFrames = tkV2Frame(self.multiFrames[1]).Frames
-			if self.tuneFrames:
-				self.tuneH1Frames = tkH2Frame(self.tuneFrames[0]).Frames
-				self.yBar = TK.Scale(self.tuneH1Frames[0], from_=0, to=255, length=300)
-				self.yBar.pack(side=TK.LEFT, fill=TK.Y)
-
-				self.curveForm = tkMatplotFigure(self.tuneH1Frames[1], figsize=(480, 480, 80), debug=True)
-				self.curveFig = self.curveForm.get_current_subplot()
-
-				self.xBar = TK.Scale(self.tuneFrames[1], orient='horizontal', from_=0, to=255, length=300)
-				self.xBar.pack(fill=TK.BOTH, expand=TK.YES)
-
-
-
-	def get_figure(self):
-		return self.curveFig
 
 
 #---------------------------------------------------------
@@ -178,6 +104,21 @@ class curvePoints:
 			self.points.append( (x, y) )
 			pass
 
+	def get_point(self, index):
+		override = 1
+		idx = index
+		if index < 0 :
+			idx = 0
+		elif index >= self.n_points:
+			idx = self.n_points -1
+		else:
+			override = 0
+		
+		if override:
+			print("Warning: illegal index {}, overriden to {}".format(index, idx))
+
+		return self.points[idx]
+
 
 #---------------------------------------------------------
 # Class CurveSplineFit
@@ -236,6 +177,24 @@ def onClose():
 	pass
 
 
+def initialize_active_point():
+	global ctrl_buttons, curvePoints, mainGUI
+
+	#-- get current control pont
+	index = ctrl_buttons.get_active_index()
+	point = curvePoints.get_point(index)
+
+	#-- set x-bar, y-bar accordingly
+	mainGUI.xBar.set(point[0])
+	mainGUI.yBar.set(point[1])
+	pass
+
+def update_active_point(ctrlButtons, curvePoints):
+	# print(ctrlButtons.buttonObject.get_value())
+	# print(ctrlButtons.get_active_index())
+	active_index = ctrlButtons.get_active_index()
+
+
 #---------------------------------------------------------
 # Main thread Entry
 #---------------------------------------------------------
@@ -285,6 +244,12 @@ if False:
 # plt.plot()
 curve_fig.plot(X, Y, 'o', curve_x, curve_y)
 # curve_fig.xlim(0, 256)
+
+#----------------------------------------------------------------------
+# Draw cross line on current active point
+#----------------------------------------------------------------------
+initialize_active_point()
+
 
 print("[INFO] Updating figure ...")
 curve_plt = mainGUI.curveForm
