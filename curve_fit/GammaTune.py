@@ -198,6 +198,7 @@ class CurveSplineFit:
 		#-- 找出 spline 的 t(vector knots 節點), c(spline coefficients 係數), k(degree of spline 階數)
 		self.degree = deg
 		self.step = step
+		print("[SplineFit] step={}, degree={}".format(step, deg))
 		self.new_x, self.new_y = self._fit_curve(X, Y, self.degree, self.step)
 		pass
 
@@ -271,7 +272,7 @@ ctrl_buttons.set_button_text(texts, idx=-1)
 
 #-- fit curve
 print("[INFO] Fitting curve ...")
-curve_fit = CurveSplineFit(X, Y, 1)
+curve_fit = CurveSplineFit(X, Y, deg=3)
 curve_x, curve_y = curve_fit.get_curve()
 
 print("[INFO] Plotting curve ...")
