@@ -109,7 +109,7 @@ class MainGUI:
 				self.yBar = TK.Scale(self.tuneH1Frames[0], from_=0, to=255, length=300)
 				self.yBar.pack(side=TK.LEFT, fill=TK.Y)
 
-				self.curveForm = tkMatplotFigure(self.tuneH1Frames[1], figsize=(480, 480, 80))
+				self.curveForm = tkMatplotFigure(self.tuneH1Frames[1], figsize=(480, 480, 80), debug=True)
 				self.curveFig = self.curveForm.get_current_subplot()
 
 				self.xBar = TK.Scale(self.tuneFrames[1], orient='horizontal', from_=0, to=255, length=300)
@@ -249,6 +249,7 @@ evAckClose.clear()
 #----------------------------------------------------
 # MainGUI Initialization
 #----------------------------------------------------
+print("[INFO] Starting main GUI...")
 mainGUI = MainGUI()
 mainGUI.thread.start()
 time.sleep(0.01)
@@ -257,11 +258,14 @@ mainGUI.root.wm_protocol("WM_DELETE_WINDOW", onClose)
 
 #-- Load control points configuration
 if sys.argv[1]:
-	curvePoints = curvePoints(pt_file=sys.argv[1], debug=True)
+	f_gma_points = sys.argv[1]
+	curvePoints = curvePoints(pt_file=f_gma_points, debug=True)
+	print("[INFO] Found and loaded gamma sample points ...")
 
 #-- format the text list of the points
 if curvePoints:
 	ctrl_points = curvePoints.points
+
 
 ctrl_buttons = mainGUI.ctrlButtons
 texts = []
@@ -274,16 +278,26 @@ for i, p in enumerate(ctrl_points):
 ctrl_buttons.set_button_text(texts, idx=-1)
 
 #-- fit curve
+print("[INFO] Fitting curve ...")
 curve_fit = CurveSplineFit(X, Y, 1)
 curve_x, curve_y = curve_fit.get_curve()
 
+print("[INFO] Plotting curve ...")
 curve_fig = mainGUI.curveFig
+if False:
+	print("--- X: ",X)
+	print("--- Y: ",Y)
+	print("--- x: ",curve_x)
+	print("--- y: ",curve_y)
 # plt.plot()
 curve_fig.plot(X, Y, 'o', curve_x, curve_y)
 # curve_fig.xlim(0, 256)
 
+print("[INFO] Updating figure ...")
 curve_plt = mainGUI.curveForm
-curve_plt.update_figure()
+print("--- 1 ---")
+# curve_plt.update_figure()
+print("--- 2 ---")
 
 #----------------------------------------------------
 # Main Loop

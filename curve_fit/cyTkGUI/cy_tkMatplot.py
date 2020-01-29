@@ -33,17 +33,28 @@ class tkMatplotFigure:
 						It is different from the matplot.figure() where figsize is given in inches.
 	@param
 	"""
-	def __init__(self, root, figID=2, figsize=(240, 90, 20), n_sub=1, figname=""):
+	def __init__(self, root, figID=2, figsize=(240, 90, 20), n_sub=1, figname="", debug=False):
+		self.debug = debug
+
+		if self.debug:
+			print("[tkMatplotFigure] figname={}, figsize={}x{}, dpi={}, subplot={}, figID={}".format(
+						figname, figsize[0], figsize[1], figsize[2], n_sub, figID) )
+	
+		self.figname = "tkMatplotFigure" if figname ==""  else figname
 		self.root=root						#-- 创建主窗体
-		self.canvas=TK.Canvas()				#-- 创建一块显示图形的画布
+
 		dpi = int(figsize[2])
 		fig_w = figsize[0]/dpi
 		fig_h = figsize[1]/dpi
 		self.figID = figID
+
+		if self.debug:
+			print("[tkMatplotFigure] creating figure ... {}x{} inches, dpi={}".format(fig_w, fig_h, dpi) )
+		self.figure = None
 		self.figure = self.create_matplotlib(figsize=(fig_w, fig_h), dpi=int(figsize[2]))		#-- 返回matplotlib所画图形的figure对象
 
-		self.canvas = None
 		self.fig_toolbar = None
+		self.canvas = None
 		self.create_figure_canvas()			#-- 将figure显示在tkinter窗体上面
 
 
@@ -82,8 +93,18 @@ class tkMatplotFigure:
 
 	def create_figure_canvas(self, toolbar=False):
 		#把绘制的图形显示到tkinter窗口上
+		if self.debug:
+			print("[{}] creating tkinter-canvas for matplot-figure ...".format(self.figname) )
+
 		if self.canvas is None:
 			self.canvas=FigureCanvasTkAgg(self.figure, self.root)
+
+		if self.canvas is None:
+			print("[{}] Error, Null canvas !!".format(self.figname) )
+			return 
+
+		if self.debug:
+			print("[{}] drawing canvas ... ".format(self.figname) )
 		self.canvas.draw()  #以前的版本使用show()方法，matplotlib 2.2之后不再推荐show（）用draw代替，但是用show不会报错，会显示警告
 		self.canvas.get_tk_widget().pack(side=TK.TOP, fill=TK.BOTH, expand=TK.YES)
 
@@ -91,13 +112,18 @@ class tkMatplotFigure:
 		if toolbar is True and self.fig_toolbar is not None:
 			self.fig_toolbar =NavigationToolbar2Tk(self.canvas, self.root) #matplotlib 2.2版本之后推荐使用NavigationToolbar2Tk，若使用NavigationToolbar2TkAgg会警告
 			self.fig_toolbar.update()
-		self.canvas._tkcanvas.pack(side=TK.TOP, fill=TK.BOTH, expand=TK.YES)
+
+		self.canvas.get_tk_widget().pack(side=TK.TOP, fill=TK.BOTH, expand=TK.YES)
 		pass
 
 
 	def update_figure(self):
 		#把绘制的图形显示到tkinter窗口上
 		# self.canvas=FigureCanvasTkAgg(figure, self.root)
+		if self.canvas is None:
+			raise Exception('Error', 'Null canvas !!')
+			exit()
+
 		self.canvas.draw()  #以前的版本使用show()方法，matplotlib 2.2之后不再推荐show（）用draw代替，但是用show不会报错，会显示警告
 		# self.canvas.get_tk_widget().pack(side=TK.TOP, fill=TK.BOTH, expand=TK.YES)
 
