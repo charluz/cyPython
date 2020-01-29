@@ -50,15 +50,13 @@ from cy_Utils.cy_TimeStamp import TimeStamp
 class MainGUI:
 	"""
 	"""
-	def __init__(self):
-		self.thread = threading.Thread(target=self.Tk_mainloop, daemon=True, args=())
-		self.lock = threading.Lock()
+	def __init__(self, tkRoot):
+		self.Tk_mainloop(tkRoot)
 		pass
 
 
-	def Tk_mainloop(self):
-		self.root = TK.Tk()
-		# print("root created !!")
+	def Tk_mainloop(self, root):
+		self.root = root
 
 		#---------------------------------
 		#-- Main layout
@@ -115,7 +113,6 @@ class MainGUI:
 				self.xBar = TK.Scale(self.tuneFrames[1], orient='horizontal', from_=0, to=255, length=300)
 				self.xBar.pack(fill=TK.BOTH, expand=TK.YES)
 
-			self.root.mainloop()
 
 
 	def get_figure(self):
@@ -232,29 +229,24 @@ class CurveSplineFit:
 # Main thread functions
 #---------------------------------------------------------
 def onClose():
-	global evAckClose
-	evAckClose.set()
-	# print("---- Set ----")
+	global tkRoot
+	tkRoot.quit()
+	tkRoot.destroy()
+	pass
 
 
 #---------------------------------------------------------
 # Main thread Entry
 #---------------------------------------------------------
 
-""" ----- Initiate Main GUI ------------------------------
-"""
-evAckClose = threading.Event()
-evAckClose.clear()
-
 #----------------------------------------------------
 # MainGUI Initialization
 #----------------------------------------------------
 print("[INFO] Starting main GUI...")
-mainGUI = MainGUI()
-mainGUI.thread.start()
-time.sleep(0.01)
+tkRoot = TK.Tk()
+mainGUI = MainGUI(tkRoot)
 
-mainGUI.root.wm_protocol("WM_DELETE_WINDOW", onClose)
+tkRoot.wm_protocol("WM_DELETE_WINDOW", onClose)
 
 #-- Load control points configuration
 if sys.argv[1]:
@@ -295,13 +287,9 @@ curve_fig.plot(X, Y, 'o', curve_x, curve_y)
 
 print("[INFO] Updating figure ...")
 curve_plt = mainGUI.curveForm
-print("--- 1 ---")
-# curve_plt.update_figure()
-print("--- 2 ---")
+curve_plt.update_figure()
 
 #----------------------------------------------------
 # Main Loop
 #----------------------------------------------------
-while True:
-	if evAckClose.isSet():
-		break
+tkRoot.mainloop()
