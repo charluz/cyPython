@@ -9,9 +9,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 
 #---------------------------------------------------------
-# Class curvePoints
+# Class CurveCXP
 #---------------------------------------------------------
-class curvePoints:
+class CurveCXP:
 	""" A class to store all control points of the curve.
 	@param	pt_file				the name-path of the file storing all control points
 
@@ -77,7 +77,6 @@ class curvePoints:
 		
 		self.x_min, self.y_min = self.points[0][0], self.points[0][1]
 		self.x_max, self.y_max = self.points[-1][0], self.points[-1][1]
-
 		pass
 
 	def get_point(self, index):

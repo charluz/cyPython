@@ -29,7 +29,7 @@ from cyTkGUI.cy_tkMatplot import tkMatplotFigure
 from cy_Utils.cy_TimeStamp import TimeStamp
 
 from mainGUI import MainGUI
-from curve_ubox import curvePoints, CurveSplineFit
+from curve_ubox import CurveCXP, CurveSplineFit
 
 ###########################################################
 # Argument Parser
@@ -46,9 +46,31 @@ from curve_ubox import curvePoints, CurveSplineFit
 # args = parser.parse_args()
 
 
-#---------------------------------------------------------
+
+#------------------------------------------------------------------------------------
+# class CallbackCXPMGR
+#------------------------------------------------------------------------------------
+class CallbackCXPMGR:
+	"""This is the class defined as a callback object to MainGUI curve control points.
+	@param 
+	"""
+	def __init__(self, debug=False):
+		pass
+
+	def button_callback(self, btn_name):
+		"""The callback of the requested (btn_name) button.
+		@param	btn_name		'add', 'prev', 'next', del'
+		"""
+		print("Button {} is pressed.".format(btn_name) )
+		pass
+
+#############################################
 # Main thread functions
-#---------------------------------------------------------
+#############################################
+
+#------------------------------------------------------------------------------------
+# onClose()
+#------------------------------------------------------------------------------------
 def onClose():
 	global tkRoot
 	tkRoot.quit()
@@ -56,6 +78,9 @@ def onClose():
 	pass
 
 
+#------------------------------------------------------------------------------------
+# _draw_cross_line()
+#------------------------------------------------------------------------------------
 def _draw_cross_line(fig, point, x_range, y_range):
 	"""
 	@param	fig										the figure to draw cross lines
@@ -74,58 +99,65 @@ def _draw_cross_line(fig, point, x_range, y_range):
 	pass
 
 
+#------------------------------------------------------------------------------------
+# initialize_active_point()
+#------------------------------------------------------------------------------------
 def initialize_active_point():
-	global ctrl_buttons, CtrlPoints, mainGUI, curve_fig
+	global ctrl_buttons, curveCXP, mainGUI, curve_fig
 
 	#-- get current control point
 	index = ctrl_buttons.get_active_index()
-	point = CtrlPoints.get_point(index)
+	point = curveCXP.get_point(index)
 
 	#-- set x-bar, y-bar accordingly
 	mainGUI.xBar.set(point[0])
 	mainGUI.yBar.set(point[1])
 
 	#-- draw cross line at current control point
-	x_range = range(CtrlPoints.x_min, CtrlPoints.x_max)
-	y_range = range(CtrlPoints.y_min, CtrlPoints.y_max)
+	x_range = range(curveCXP.x_min, curveCXP.x_max)
+	y_range = range(curveCXP.y_min, curveCXP.y_max)
 	_draw_cross_line(curve_fig, point,  x_range, y_range)
+
 	pass
 
-def update_active_point(ctrlButtons, CtrlPoints):
+#------------------------------------------------------------------------------------
+# update_active_point()
+#------------------------------------------------------------------------------------
+def update_active_point(ctrlButtons, curveCXP):
 	# print(ctrlButtons.buttonObject.get_value())
 	# print(ctrlButtons.get_active_index())
 	active_index = ctrlButtons.get_active_index()
+	pass
 
 
-#---------------------------------------------------------
+###########################################
 # Main thread Entry
-#---------------------------------------------------------
+###########################################
 
 #----------------------------------------------------
 # MainGUI Initialization
 #----------------------------------------------------
 print("[INFO] Starting main GUI...")
 tkRoot = TK.Tk()
-mainGUI = MainGUI(tkRoot)
-
 tkRoot.wm_protocol("WM_DELETE_WINDOW", onClose)
+mainGUI = MainGUI(tkRoot)
 
 #-- Load control points configuration
 if sys.argv[1]:
 	f_gma_points = sys.argv[1]
-	CtrlPoints = curvePoints(pt_file=f_gma_points, debug=True)
+	curveCXP = CurveCXP(pt_file=f_gma_points, debug=True)
 	print("[INFO] Found and loaded gamma sample points ...")
 
 #-- format the text list of the points
-if CtrlPoints:
-	ctrl_points = CtrlPoints.points
+if curveCXP:
+	cxpPoints = curveCXP.points
 
 
 ctrl_buttons = mainGUI.ctrlButtons
 texts = []
 X = []
 Y = []
-for i, p in enumerate(ctrl_points):
+for i, p in enumerate(cxpPoints):
 	texts.append("P{:<2d}: X={:<3d}, Y={:<3d}".format(i, p[0], p[1]))
 	X.append(p[0])
 	Y.append(p[1])
@@ -150,6 +182,9 @@ curve_fig.plot(X, Y, 'o', curve_x, curve_y)
 #----------------------------------------------------------------------
 initialize_active_point()
 
+#-- register CXPMGR button command callback
+CxpMGR = CallbackCXPMGR()
+mainGUI.set_CXPMGR_callback(CxpMGR)
 
 print("[INFO] Updating figure ...")
 curve_plt = mainGUI.curveForm

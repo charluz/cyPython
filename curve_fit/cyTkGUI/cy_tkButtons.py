@@ -52,10 +52,10 @@ class tkButton:
 class XsvButtonStack:
 	"""
 	@param	num_btn			Button 的個數
-	@param	orient			Button 排列方式: "H"、"V"、"GRID" 分別對應: 水平、垂直、棋盤。
+	@param	orient				Button 排列方式: "H"、"V"、"GRID" 分別對應: 水平、垂直、棋盤。
 	@param	column			如果排列方式設定為 "GRID"，必須同時設定 column=N 標示棋盤的橫向個數
 	"""
-	def __init__(self, rootwin, num_btn=16, orient="V", column=1,
+	def __init__(self, rootwin, num_btn=16, orient="V", width=16, column=1,
 					cls_name="XBStk", debug=False):
 		self.rootwin = rootwin
 		self.cls_name = cls_name
@@ -64,7 +64,7 @@ class XsvButtonStack:
 		btn_labels = [ ("----", i) for i in range(0, num_btn-1)]
 		self.num_btn = num_btn
 		self.orient = "H" if orient=="H" else ("GRID" if orient=="GRID" else "V")
-		self.buttonObject = tkRadioButton(rootwin, buttons=btn_labels, pack_type=self.orient, isRadio=False)
+		self.buttonObject = tkRadioButton(rootwin, buttons=btn_labels, width=width,  pack_type=self.orient, isRadio=False)
 		self.Buttons = self.buttonObject.Buttons
 		self.num_active = num_btn
 		pass

@@ -69,12 +69,13 @@ class tkRadioButton:
 	@param	pack_column		如果排列方式設定為 "GRID"，必須同時設定 column=N 標示棋盤的橫向個數
 	"""
 	def __init__(self, rootWin, label="", buttons=None, value=0, isRadio=True,
-					pack_type="GRID", pack_column=3, border=2, debug=False):
+					width=12, pack_type="GRID", pack_column=3, border=2, debug=False):
 		self.debug = debug
 		self.root = rootWin
 		self.clsName = "radioButtons" if not label else label
 		self.isRadio = isRadio
 		self.initVal = value
+		self.button_width = width
 
 		self.pack_type = pack_type
 		self.pack_column = pack_column
@@ -183,7 +184,7 @@ class tkRadioButton:
 
 	def _pack_Vertical(self):
 		for btn in self._buttons:
-			b = TK.Radiobutton(self.rootFrame, text=btn[0], variable=self.radioVal, value=btn[1], indicatoron=self.isRadio)
+			b = TK.Radiobutton(self.rootFrame, text=btn[0], width=self.button_width, variable=self.radioVal, value=btn[1], indicatoron=self.isRadio)
 			b.pack(side=TK.TOP)
 			self.Buttons.append(b)
 
