@@ -25,6 +25,8 @@ class CurveCXP:
 	"""
 	def __init__(self, pt_file="", name="", debug=False):
 		self.points= None	#-- the list of all points loaded
+		self.cxp_X = []
+		self.cxp_Y = []
 		self.debug = debug
 
 		if pt_file:
@@ -74,10 +76,14 @@ class CurveCXP:
 			x =  int(X[i]) if X[i].find('.') < 0 else float(X[i])	#-- (we only accept integer or float value)
 			y =  int(Y[i]) if Y[i].find('.') < 0 else float(Y[i])
 			self.points.append( (x, y) )
+			self.cxp_X.append(x)
+			self.cxp_Y.append(y)
 		
 		self.x_min, self.y_min = self.points[0][0], self.points[0][1]
 		self.x_max, self.y_max = self.points[-1][0], self.points[-1][1]
-		pass
+		
+		return self.points
+
 
 	def get_point(self, index):
 		override = 1

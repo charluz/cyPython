@@ -78,26 +78,6 @@ def onClose():
 	pass
 
 
-#------------------------------------------------------------------------------------
-# _draw_cross_line()
-#------------------------------------------------------------------------------------
-def _draw_cross_line(fig, point, x_range, y_range):
-	"""
-	@param	fig										the figure to draw cross lines
-	@param	point								the control point in (x, y) tuple
-	@param	x_range, y_range		python range object.
-	"""
-	vline_x = [point[0] for i in y_range]
-	vline_y = [i for i in y_range]
-
-	hline_x = [i for i in x_range]
-	hline_y = [point[1] for i in x_range]
-
-	fig.plot(point[0], point[1], 'o',  color='red')
-	fig.plot(vline_x, vline_y, color='red', linewidth=2, linestyle='dotted')
-	fig.plot(hline_x, hline_y, color='red', linewidth=2, linestyle='dotted')
-	pass
-
 
 #------------------------------------------------------------------------------------
 # initialize_active_point()
@@ -144,43 +124,48 @@ mainGUI = MainGUI(tkRoot)
 
 #-- Load control points configuration
 if sys.argv[1]:
-	f_gma_points = sys.argv[1]
-	curveCXP = CurveCXP(pt_file=f_gma_points, debug=True)
+	f_gma_file = sys.argv[1]
+	mainGUI.load_curveCXP(f_gma_file)
+	# curveCXP = CurveCXP(pt_file=f_gma_points, debug=True)
 	print("[INFO] Found and loaded gamma sample points ...")
 
-#-- format the text list of the points
-if curveCXP:
-	cxpPoints = curveCXP.points
+# #-- format the text list of the points
+# if curveCXP:
+# 	cxpPoints = curveCXP.points
 
-
-ctrl_buttons = mainGUI.ctrlButtons
-texts = []
-X = []
-Y = []
-for i, p in enumerate(cxpPoints):
-	texts.append("P{:<2d}: X={:<3d}, Y={:<3d}".format(i, p[0], p[1]))
-	X.append(p[0])
-	Y.append(p[1])
-ctrl_buttons.set_button_text(texts, idx=-1)
+print("[INFO] Updating CXP buttons ...")
+mainGUI.update_CXP_buttons()
+# ctrl_buttons = mainGUI.ctrlButtons
+# texts = []
+# X = []
+# Y = []
+# for i, p in enumerate(cxpPoints):
+# 	texts.append("P{:<2d}: X={:<3d}, Y={:<3d}".format(i, p[0], p[1]))
+# 	X.append(p[0])
+# 	Y.append(p[1])
+# ctrl_buttons.set_button_text(texts, idx=-1)
 
 #-- fit curve
 print("[INFO] Fitting curve ...")
-curve_fit = CurveSplineFit(X, Y, deg=3)
-curve_x, curve_y = curve_fit.get_curve()
+mainGUI.fit_spline_curve()
+# curve_fit = CurveSplineFit(X, Y, deg=3)
+# curve_x, curve_y = curve_fit.get_curve()
 
 print("[INFO] Plotting curve ...")
-curve_fig = mainGUI.curveFig
-if False:
-	print("--- X: ",X)
-	print("--- Y: ",Y)
-	print("--- x: ",curve_x)
-	print("--- y: ",curve_y)
-curve_fig.plot(X, Y, 'o', curve_x, curve_y)
+mainGUI.plot_fitted_curve()
+# curve_fig = mainGUI.curveFig
+# if False:
+# 	print("--- X: ",X)
+# 	print("--- Y: ",Y)
+# 	print("--- x: ",curve_x)
+# 	print("--- y: ",curve_y)
+# curve_fig.plot(X, Y, 'o', curve_x, curve_y)
 
 #----------------------------------------------------------------------
 # Draw cross line on current active point
 #----------------------------------------------------------------------
-initialize_active_point()
+mainGUI.update_active_cxp(set_xyBar=True)
+# initialize_active_point()
 
 #-- register CXPMGR button command callback
 CxpMGR = CallbackCXPMGR()

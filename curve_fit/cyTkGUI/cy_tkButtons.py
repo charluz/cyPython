@@ -61,7 +61,7 @@ class XsvButtonStack:
 		self.cls_name = cls_name
 		self.debug = debug
 
-		btn_labels = [ ("----", i) for i in range(0, num_btn-1)]
+		btn_labels = [ ("-- x --", i) for i in range(0, num_btn-1)]
 		self.num_btn = num_btn
 		self.orient = "H" if orient=="H" else ("GRID" if orient=="GRID" else "V")
 		self.buttonObject = tkRadioButton(rootwin, buttons=btn_labels, width=width,  pack_type=self.orient, isRadio=False)
@@ -82,19 +82,24 @@ class XsvButtonStack:
 						btn.configure(text=text[i])
 					else:
 						btn.configure(state=TK.DISABLED)
-						btn.configure(text="")
+						btn.configure(text="-- x --")
+				self.num_active = len(n_text)
+				pass
 			else:
 				#-- n_text > n_button
 				for i, btn in enumerate(self.Buttons):
 					btn.configure(state=TK.NORMAL)
 					btn.configure(text=text[i])
+				self.num_active = n_buttons
 				pass
 		elif idx in range(0, len(self.Buttons)):
 			self.Buttons[idx].configure(state=TK.NORMAL)
 			self.Buttons[idx].configure(text=text)
+			pass
 		else:
 			if self.debug:
 				print("[{}] idx({}) is illegal!!".format(self.clsName, idx))
+			pass
 		pass
 
 	def get_active_index(self):
