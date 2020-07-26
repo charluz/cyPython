@@ -1,1 +1,14 @@
 "pyinstaller --windowed raw_reader.py" 
+
+[注意]
+Python 3.6 以上好像匯出先一堆 error 
+e.g., Failed to execute script pyi_rth_pkgres
+
+解法是修改 .spec 檔案，加入以下 hiddenimports=['pkg_resources.py2_warn']
+但是要注意的是，修改 .spec 後要用以下指令重 build
+不然 .spec 會被重新覆蓋失效
+pyinstaller -w -D xxx.spec
+
+
+或是以下參數 --hidden-import
+pyinstaller --hidden-import=pkg_resources.py2_warn -w -D xxx.py
