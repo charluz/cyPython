@@ -1,14 +1,18 @@
 "pyinstaller --windowed raw_reader.py" 
 
-[ª`·N]
-Python 3.6 ¥H¤W¦n¹³¶×¥X¥ı¤@°ï error 
+[æ³¨æ„]
+Python 3.6 ä»¥ä¸Šæœƒå‡ºç¾ä¸€äº› error 
 e.g., Failed to execute script pyi_rth_pkgres
 
-¸Ñªk¬O­×§ï .spec ÀÉ®×¡A¥[¤J¥H¤U hiddenimports=['pkg_resources.py2_warn']
-¦ı¬O­nª`·Nªº¬O¡A­×§ï .spec «á­n¥Î¥H¤U«ü¥O­« build
-¤£µM .spec ·|³Q­«·sÂĞ»\¥¢®Ä
+[Method-I]
+ä¿®æ”¹ .spec æª”ï¼Œæ–°å¢ hiddenimports=['pkg_resources.py2_warn']
+è¦æ³¨æ„çš„æ˜¯è¦ç”¨ä»¥ä¸‹æŒ‡ä»¤ build exe æª”
+
 pyinstaller -w -D xxx.spec
 
+ä¸å¯ä»¥ build xxx.pyï¼Œå¦å‰‡ .spec æœƒè¢«è¦†è“‹
 
-©Î¬O¥H¤U°Ñ¼Æ --hidden-import
+[Method-II]
+ä½¿ç”¨æŒ‡ä»¤åƒæ•¸ --hidden-import
+
 pyinstaller --hidden-import=pkg_resources.py2_warn -w -D xxx.py
